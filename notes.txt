@@ -1,0 +1,83 @@
+# Notes for gardenjournal backend
+
+This file contains a list of useful commands for working with the Go backend of the gardenjournal project.
+
+## Dependencies
+
+To install or update dependencies, run the following command in the 'apps/backend' directory:
+
+```bash
+go mod tidy
+```
+
+## Building
+
+To build the project, run the following command in the 'apps/backend' directory:
+
+```bash
+go build ./...
+```
+
+## Running the application
+
+To run the application, use the following command in the 'apps/backend' directory:
+
+```bash
+go run ./cmd/gardenjournal
+```
+
+Alternatively, you can use the task runner:
+
+```bash
+task run
+```
+
+## Testing
+
+To run the tests, use the following command in the 'apps/backend' directory:
+
+```bash
+go test ./...
+```
+
+## Linting
+
+This project uses golangci-lint for linting. To run the linter, you'll need to have it installed. Then, run the following command in the 'apps/backend' directory:
+
+```bash
+golangci-lint run
+```
+
+## Database Migrations
+
+This project uses 'tern' for database migrations. The migration files are located in 'apps/backend/internal/database/migrations'.
+
+### Create a new migration
+
+To create a new migration file, run the following command in the 'apps/backend' directory, replacing 'migration_name' with a descriptive name for your migration:
+
+```bash
+task migrations:new name=migration_name
+```
+
+### Apply migrations
+
+To apply all "up" migrations, you need to set the 'gardenjournal_DB_DSN' environment variable with your database connection string. Then, run the following command in the 'apps/bckend' directory:
+
+```bash
+task migrations:up
+```
+
+You will be prompted for confirmation before the migrations are applied.
+
+## Formatting and Tidying
+
+To format all `.go` files, and tidy and vendor module dependencies, run the following command in the 'apps/backend' directory:
+
+```bash
+task tidy
+```
+
+bun install
+bun dev - builds a couple of things
+bun clean

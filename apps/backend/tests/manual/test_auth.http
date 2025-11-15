@@ -1,0 +1,245 @@
+# Authentication Manual Test Suite
+# This file can be used with REST clients like:
+# - Bruno: https://www.usebruno.com/
+# - HTTPie: https://httpie.io/
+# - REST Client for VS Code
+# - Postman: https://www.postman.com/
+
+### Variables
+@baseUrl = http://localhost:8080
+@apiPrefix = /api/v1
+
+# Get a fresh JWT token from your frontend by running this in browser console:
+# await window.Clerk.session.getToken({ template: "api-test" })
+@validJwt = eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDIyMkFBQSIsImtpZCI6Imluc18zM284bGJ5bEhxNlU0T1hRd3JzalFweGRsVEEiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwczovL2FjZS1kaW5vc2F1ci0zOS5hY2NvdW50cy5kZXYiLCJleHAiOjE3OTQ2MjM2MTMsImlhdCI6MTc2MzA4NzYxMywiaXNzIjoiaHR0cHM6Ly9hY2UtZGlub3NhdXItMzkuY2xlcmsuYWNjb3VudHMuZGV2IiwianRpIjoiMGQxMzUwNzVkMjk1YzIzYmRkNWEiLCJuYmYiOjE3NjMwODc2MDgsInN1YiI6InVzZXJfMzU3MEJEdFRyeUlYMmNBY2oxb3dCdFBRQU5lIn0.TZB9k9cyk0HZhEdIRiLlDOUNo52swqnSUSWVepGDZQX2MXCiEzeGF9blu1oXewenutJvrnHf7sOAWl8WxqUnK4LPTs1eitkRUIhnLdrK71VOWSkqCxjRlBWLMxgLJFqrb2-Gm5ctwc2sVllK3hSmRiATvlTYYnlL0cj3w9G2syVuPhOj3ehaSaNTRBZj--ZIX2VjJKjtKCRylxJyIs5mrGm6NePXk2qCRbcEbrdhtgYrbtK9shkFUHJdyamSe3YImBDE-zgcDvIYo6J6STW_eb6KLxa4Wd0cKbMlA0RkwGm2f9HkrMLQz6O6S-mlWBOAXsqM9vydkXqAWpqGcW6yrA
+
+###############################################################################
+# TEST 1: Missing Authorization Header
+# Expected: 401 Unauthorized
+# Error: "Missing authorization header"
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants
+
+###############################################################################
+# TEST 2: Invalid Token Format - No Bearer Prefix
+# Expected: 401 Unauthorized
+# Error: "Invalid authorization header format"
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants
+Authorization: invalidtokenhere
+
+###############################################################################
+# TEST 3: Invalid Token Format - Empty Bearer Token
+# Expected: 401 Unauthorized
+# Error: "Invalid authorization header format"
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants
+Authorization: Bearer
+
+###############################################################################
+# TEST 4: Malformed JWT - Invalid Structure
+# Expected: 401 Unauthorized
+# Error: "Invalid or expired token"
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants
+Authorization: Bearer invalid.jwt.token
+
+###############################################################################
+# TEST 5: Malformed JWT - Not a JWT
+# Expected: 401 Unauthorized
+# Error: "Invalid or expired token"
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants
+Authorization: Bearer randomstringnotajwt
+
+###############################################################################
+# TEST 6: Valid JWT - GET Plants
+# Expected: 200 OK
+# Response: Paginated list of plants (may be empty)
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants
+Authorization: Bearer {{validJwt}}
+
+###############################################################################
+# TEST 7: Valid JWT - GET Plant by ID
+# Expected: 200 OK (if plant exists) or 404 Not Found
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/plants/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer {{validJwt}}
+
+###############################################################################
+# TEST 8: Valid JWT - GET Observations
+# Expected: 200 OK
+# Response: Paginated list of observations
+###############################################################################
+
+GET {{baseUrl}}{{apiPrefix}}/observations
+Authorization: Bearer {{validJwt}}
+
+###############################################################################
+# TEST 9: Valid JWT - POST Plant (Create)
+# Expected: 201 Created
+# Response: Created plant object
+###############################################################################
+
+POST {{baseUrl}}{{apiPrefix}}/plants
+Authorization: Bearer {{validJwt}}
+Content-Type: application/json
+
+{
+  "name": "Monstera Deliciosa",
+  "species": "Monstera deliciosa",
+  "location": "Living Room",
+  "wateringFrequency": 7,
+  "lastWatered": "2025-11-13T00:00:00Z",
+  "notes": "Needs indirect sunlight"
+}
+
+###############################################################################
+# TEST 10: Valid JWT - POST Observation (Create)
+# Expected: 201 Created
+# Response: Created observation object
+# Note: Replace {plantId} with an actual plant ID from your database
+###############################################################################
+
+POST {{baseUrl}}{{apiPrefix}}/observations
+Authorization: Bearer {{validJwt}}
+Content-Type: application/json
+
+{
+  "plantId": "123e4567-e89b-12d3-a456-426614174000",
+  "type": "watering",
+  "date": "2025-11-13T00:00:00Z",
+  "notes": "Watered with filtered water",
+  "images": []
+}
+
+###############################################################################
+# TEST 11: Valid JWT - PUT Plant (Update)
+# Expected: 200 OK
+# Response: Updated plant object
+# Note: Replace {plantId} with an actual plant ID
+###############################################################################
+
+PUT {{baseUrl}}{{apiPrefix}}/plants/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer {{validJwt}}
+Content-Type: application/json
+
+{
+  "name": "Monstera Deliciosa (Updated)",
+  "species": "Monstera deliciosa",
+  "location": "Bedroom",
+  "wateringFrequency": 10,
+  "lastWatered": "2025-11-13T00:00:00Z",
+  "notes": "Moved to bedroom for better light"
+}
+
+###############################################################################
+# TEST 12: Valid JWT - DELETE Plant
+# Expected: 204 No Content
+# Note: Replace {plantId} with an actual plant ID
+###############################################################################
+
+DELETE {{baseUrl}}{{apiPrefix}}/plants/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer {{validJwt}}
+
+###############################################################################
+# VERIFICATION CHECKLIST
+###############################################################################
+
+# Authentication Tests:
+# [ ] Test 1: Missing header returns 401
+# [ ] Test 2: No Bearer prefix returns 401
+# [ ] Test 3: Empty token returns 401
+# [ ] Test 4: Malformed JWT returns 401
+# [ ] Test 5: Random string returns 401
+
+# Authorized Operations:
+# [ ] Test 6: Valid JWT can GET plants list
+# [ ] Test 7: Valid JWT can GET single plant
+# [ ] Test 8: Valid JWT can GET observations list
+# [ ] Test 9: Valid JWT can POST (create) plant
+# [ ] Test 10: Valid JWT can POST (create) observation
+# [ ] Test 11: Valid JWT can PUT (update) plant
+# [ ] Test 12: Valid JWT can DELETE plant
+
+# Server Logs Verification:
+# [ ] "token verification successful" appears in logs
+# [ ] "JWT verified and claims stored in context" appears
+# [ ] "user authenticated successfully" appears
+# [ ] user_id is logged with each request
+# [ ] No "could not get session claims from context" errors
+
+###############################################################################
+# TROUBLESHOOTING
+###############################################################################
+
+# If tests fail, check the following:
+
+# 1. Server is running
+#    $ task run
+
+# 2. Environment variables are set (.env file)
+#    GARDENJOURNAL_AUTH.CLERK.SECRET_KEY="sk_test_..."
+#    GARDENJOURNAL_AUTH.CLERK.JWT_ISSUER="https://ace-dinosaur-39.clerk.accounts.dev"
+
+# 3. Database is running and accessible
+#    $ psql -U srauf -d gardenjournal -c "SELECT 1"
+
+# 4. Database permissions are correct
+#    $ psql -U sameerauf -d gardenjournal -c "\dp plants"
+
+# 5. JWT token is fresh (not expired)
+#    - Decode token at https://jwt.io
+#    - Check 'exp' claim is in the future
+#    - Generate new token from frontend if needed
+
+# 6. JWT issuer matches configuration
+#    - Token 'iss' claim should match CLERK.JWT_ISSUER env variable
+
+# 7. Check server logs for detailed errors
+#    - Look for "token verification failed" errors
+#    - Check for database permission errors
+#    - Verify user_id is being extracted correctly
+
+###############################################################################
+# GETTING A FRESH JWT TOKEN
+###############################################################################
+
+# Method 1: From Browser Console (Recommended)
+# 1. Open your Garden Journal frontend in a browser
+# 2. Open browser DevTools (F12)
+# 3. Go to Console tab
+# 4. Run: await window.Clerk.session.getToken({ template: "api-test" })
+# 5. Copy the token and update @validJwt variable above
+
+# Method 2: From Clerk Dashboard
+# 1. Go to https://dashboard.clerk.com
+# 2. Select your application
+# 3. Go to Sessions → Active Sessions
+# 4. Copy a session token
+# 5. Update @validJwt variable above
+
+# Method 3: From Network Tab
+# 1. Open your frontend with DevTools Network tab open
+# 2. Make any authenticated request
+# 3. Look for "Authorization" header in request headers
+# 4. Copy the Bearer token value
+# 5. Update @validJwt variable above
+
+###############################################################################
+# NOTES
+###############################################################################
+
+# - All /api/v1/* endpoints require authentication
+# - JWT tokens expire after a configured time (check 'exp' claim)
+# - User can only access their own plants and observations
+# - Rate limiting may apply to authentication endpoints
+# - For production, use HTTPS (https://) instead of HTTP
