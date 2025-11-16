@@ -69,6 +69,12 @@ CREATE INDEX idx_asset_logs_content_vector ON asset_logs USING GIN (content_vect
 -- Create partial GIN index on tags for tag filtering
 CREATE INDEX idx_asset_logs_tags ON asset_logs USING GIN (tags) WHERE tags IS NOT NULL;
 
+-- Create trigger to auto-update updated_at on asset_logs table
+CREATE TRIGGER set_asset_logs_timestamp
+  BEFORE UPDATE ON asset_logs
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_set_timestamp();
+
 ---- tern migration down
 
 -- TODO: Rollback content will be added in subsequent steps
