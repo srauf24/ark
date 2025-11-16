@@ -54,6 +54,21 @@ CREATE TABLE asset_logs (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Create index on user_id for security and multi-tenancy
+CREATE INDEX idx_asset_logs_user_id ON asset_logs(user_id);
+
+-- Create index on asset_id for efficient joins
+CREATE INDEX idx_asset_logs_asset_id ON asset_logs(asset_id);
+
+-- Create index on created_at for chronological ordering
+CREATE INDEX idx_asset_logs_created_at ON asset_logs(created_at DESC);
+
+-- Create GIN index on content_vector for full-text search
+CREATE INDEX idx_asset_logs_content_vector ON asset_logs USING GIN (content_vector);
+
+-- Create partial GIN index on tags for tag filtering
+CREATE INDEX idx_asset_logs_tags ON asset_logs USING GIN (tags) WHERE tags IS NOT NULL;
+
 ---- tern migration down
 
 -- TODO: Rollback content will be added in subsequent steps
