@@ -1,62 +1,51 @@
-# Ark Project Context
+Ark Project Context
+⚠️ Project Transition Notice
+This repository was previously the garden_journal project and is being repurposed for Ark.
+What this means:
 
-## ⚠️ Project Transition Notice
+Any references to "garden_journal", "plants", "observations" should be replaced with Ark equivalents (assets, logs)
+Old code/files are being migrated or removed - see MVP tickets (ARK-1 through ARK-22)
+If you encounter garden_journal code, it should be updated to Ark or deleted
+Configuration may still reference old names - these need updating
 
-**This repository was previously the `garden_journal` project and is being repurposed for Ark.**
+Key Changes:
+Garden JournalArk EquivalentPlantsAssetsObservationsLogs (AssetLogs)Plant species/varietyAsset type/hostnamePlant notesLog content-AI query (new feature)
+During Development:
 
-**What this means:**
-- Any references to "garden_journal", "plants", "observations" should be **replaced** with Ark equivalents (assets, logs)
-- Old code/files are being **migrated or removed** - see MVP tickets (ARK-1 through ARK-22)
-- If you encounter garden_journal code, it should be **updated to Ark** or **deleted**
-- Configuration may still reference old names - these need updating
+Prioritize Ark implementation over garden_journal compatibility
+Remove old plant/observation routes, handlers, models as you build Ark equivalents
+Update import paths from garden_journal to ark
+Module in go.mod renamed from garden_journal to ark ✅ (ARK-1 complete)
+Database name updated from gardenjournal to ark
 
-**Key Changes:**
-| Garden Journal | Ark Equivalent |
-|----------------|----------------|
-| Plants | Assets |
-| Observations | Logs (AssetLogs) |
-| Plant species/variety | Asset type/hostname |
-| Plant notes | Log content |
-| - | AI query (new feature) |
 
-**During Development:**
-- Prioritize Ark implementation over garden_journal compatibility
-- Remove old plant/observation routes, handlers, models as you build Ark equivalents
-- Update import paths from `garden_journal` to `ark`
-- Rename module in `go.mod` from `garden_journal` to `ark`
-- Update database name from `gardenjournal` to `ark`
+Overview
+Ark is a homelab asset tracking and configuration log management application with AI-powered search. Built with Go (backend) and TypeScript/React (frontend) in a Turborepo monorepo.
+Core Use Case: Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes. AI assistant helps query logs in natural language.
 
----
+Tech Stack
+Backend:
 
-## Overview
-**Ark** is a homelab asset tracking and configuration log management application with AI-powered search. Built with **Go (backend)** and **TypeScript/React (frontend)** in a **Turborepo** monorepo.
+Go 1.24+, Echo framework
+PostgreSQL 16+ (connection pooling, full-text search, trigram matching)
+Redis 8+ for background jobs and caching
+Clerk SDK v2 for authentication
+OpenAI API (gpt-4o-mini) for AI queries
+Zerolog for structured logging
+New Relic for APM (optional but recommended)
+Resend for transactional emails
 
-**Core Use Case:** Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes. AI assistant helps query logs in natural language.
+Frontend:
 
----
+React 19.1.0, TypeScript 5.8.2, Vite 7.0.4
+TanStack Query for data fetching
+Clerk for authentication
+Tailwind CSS, React Router
 
-## Tech Stack
 
-**Backend:**
-- Go 1.24+, Echo framework
-- PostgreSQL 16+ (connection pooling, full-text search, trigram matching)
-- Clerk SDK v2 for authentication
-- OpenAI API (gpt-4o-mini) for AI queries
-- Zerolog for structured logging
-
-**Frontend:**
-- React 19.1.0, TypeScript 5.8.2, Vite 7.0.4
-- TanStack Query for data fetching
-- Clerk for authentication
-- Tailwind CSS, React Router
-
----
-
-## Architecture
-
-### Backend Structure
-```bash
-apps/backend/
+Architecture
+Backend Structure
+bashapps/backend/
 ├── cmd/ark/                   # Main application entry point (was cmd/gardenjournal)
 ├── internal/
 │   ├── config/                # Koanf-based configuration
@@ -64,7 +53,8 @@ apps/backend/
 │   ├── handler/               # HTTP handlers (Echo)
 │   │   ├── asset.go              # Asset CRUD (replaces plant.go)
 │   │   ├── log.go                # Log CRUD (replaces observation.go)
-│   │   └── ai.go                 # AI query endpoint (NEW)
+│   │   ├── ai.go                 # AI query endpoint (NEW)
+│   │   └── health.go             # Health check endpoint (KEEP)
 │   ├── service/               # Business logic
 │   │   ├── asset_service.go      # (replaces plant_service.go)
 │   │   ├── log_service.go        # (replaces observation_service.go)
@@ -76,21 +66,32 @@ apps/backend/
 │   │   ├── asset.go              # (replaces plant.go)
 │   │   ├── log.go                # (replaces observation.go)
 │   │   └── ai.go                 # (NEW)
-│   ├── middleware/            # Auth, CORS, logging, errors (reuse from garden_journal)
+│   ├── middleware/            # HTTP middleware (REUSE)
+│   │   ├── auth.go               # Two-phase Clerk authentication
+│   │   ├── global.go             # Error handling, logging, CORS
+│   │   ├── context.go            # Request context management
+│   │   ├── tracing.go            # New Relic tracing
+│   │   └── middleware.go         # Middleware aggregator
 │   ├── router/v1/             # Route registration
-│   ├── lib/
-│   │   ├── jwt/                  # JWT verification (reuse)
-│   │   ├── errs/                 # Custom error types (reuse)
-│   │   └── llm/                  # LLM client (OpenAI) (NEW)
-│   └── server/                # Server config (reuse)
+│   ├── lib/                   # Shared utilities
+│   │   ├── jwt/                  # JWT verification (REUSE)
+│   │   ├── errs/                 # Custom error types (REUSE)
+│   │   ├── llm/                  # LLM client (OpenAI) (NEW)
+│   │   ├── email/                # Email client (Resend) (KEEP)
+│   │   ├── job/                  # Background job processing (KEEP)
+│   │   └── weather/              # Weather API integration (KEEP for future)
+│   ├── logger/                # Logging setup (REUSE)
+│   ├── server/                # Server config (REUSE)
+│   └── validation/            # Request validation (REUSE)
+├── templates/              # Email templates (KEEP)
+│   └── emails/
+│       └── welcome.html        # Update branding for Ark
+├── static/                 # Static files (KEEP)
 └── tests/
     ├── integration/           # Integration tests
     └── manual/                # .http files (asset, log, ai, e2e)
-```
-
-### Frontend Structure
-```bash
-apps/web/src/
+Frontend Structure
+bashapps/web/src/
 ├── components/
 │   ├── assets/                # AssetList, AssetCard, AssetForm (replaces plants/)
 │   ├── logs/                  # LogList, LogCard, LogForm (replaces observations/)
@@ -168,15 +169,18 @@ DELETE /api/v1/logs/:id            # Delete
 POST   /api/v1/ai/query            # Query logs with natural language
 ```
 
+**System:**
+```
+GET    /health                     # Health check (database, redis)
+GET    /openapi.json               # OpenAPI specification
+```
+
 **OLD Endpoints (TO BE REMOVED):**
 ```
 ❌ /api/v1/plants                  # DELETE - replaced by /assets
 ❌ /api/v1/observations            # DELETE - replaced by /logs
-```
-
-**Request/Response Examples:**
-```json
-// AI Query Request
+Request/Response Examples:
+json// AI Query Request
 {
   "asset_id": "550e8400-e29b-41d4-a716-446655440000",
   "query": "How did I fix nginx?"
@@ -187,6 +191,16 @@ POST   /api/v1/ai/query            # Query logs with natural language
   "answer": "You fixed nginx on 2024-03-15 by updating /etc/nginx/nginx.conf and restarting the service.",
   "sources": ["660e8400-e29b-41d4-a716-446655440001"],
   "method": "recent"  // MVP: "recent", V1: "fts", V2: "vector"
+}
+
+// Health Check Response
+{
+  "status": "healthy",
+  "checks": {
+    "database": "ok",
+    "redis": "ok"
+  },
+  "timestamp": "2024-03-15T14:30:00Z"
 }
 ```
 
@@ -209,50 +223,72 @@ POST   /api/v1/ai/query            # Query logs with natural language
 
 **Request Flow:**
 ```
-Request → CORS/Logging → ClerkAuth → RequireAuth → Validation → Handler → ErrorHandler → Response
-```
+Request → CORS/Logging → New Relic Tracing → ClerkAuth → RequireAuth → Validation → Handler → ErrorHandler → Response
+Note: Authentication middleware from garden_journal can be reused as-is. Update route groups to apply to /assets and /logs instead of /plants and /observations.
 
-**Note:** Authentication middleware from garden_journal can be **reused as-is**. Update route groups to apply to `/assets` and `/logs` instead of `/plants` and `/observations`.
-
----
-
-## Configuration
-
-**Required Environment Variables:**
-```bash
-# Server
-ARK_SERVER.PORT="8080"                    # Was GARDENJOURNAL_SERVER.PORT
+Configuration
+Required Environment Variables:
+bash# Server
+ARK_SERVER.PORT="8080"
+ARK_SERVER.READ_TIMEOUT="30"
+ARK_SERVER.WRITE_TIMEOUT="30"
+ARK_SERVER.IDLE_TIMEOUT="60"
+ARK_SERVER.CORS_ALLOWED_ORIGINS="http://localhost:3000"
 
 # Database (PostgreSQL 16+)
-ARK_DATABASE.HOST="localhost"             # Was GARDENJOURNAL_DATABASE.HOST
-ARK_DATABASE.USER="ark_user"              # Was GARDENJOURNAL_DATABASE.USER
-ARK_DATABASE.PASSWORD="your_password"     # Was GARDENJOURNAL_DATABASE.PASSWORD
-ARK_DATABASE.NAME="ark"                   # Was GARDENJOURNAL_DATABASE.NAME="gardenjournal"
+ARK_DATABASE.HOST="localhost"
+ARK_DATABASE.PORT="5432"
+ARK_DATABASE.USER="ark_user"
+ARK_DATABASE.PASSWORD="your_password"
+ARK_DATABASE.NAME="ark"
+ARK_DATABASE.SSL_MODE="disable"
+ARK_DATABASE.MAX_OPEN_CONNS="25"
+ARK_DATABASE.MAX_IDLE_CONNS="25"
+ARK_DATABASE.CONN_MAX_LIFETIME="300"
+ARK_DATABASE.CONN_MAX_IDLE_TIME="300"
 
-# Clerk Authentication (REUSE - no change)
+# Clerk Authentication
 ARK_AUTH.CLERK.SECRET_KEY="sk_test_..."
 ARK_AUTH.CLERK.JWT_ISSUER="https://your-app.clerk.accounts.dev"
+ARK_AUTH.CLERK.PEM_PUBLIC_KEY=""  # Optional for manual verification
 
 # OpenAI (NEW)
 ARK_OPENAI.API_KEY="sk-..."
 ARK_OPENAI.MODEL="gpt-4o-mini"
-```
 
-**Frontend `.env`:**
-```bash
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+# Redis (for background jobs)
+ARK_REDIS.ADDRESS="localhost:6379"
+
+# Resend (for emails)
+ARK_INTEGRATION.RESEND_API_KEY="re_..."
+
+# Observability
+ARK_OBSERVABILITY.SERVICE_NAME="ark"
+ARK_OBSERVABILITY.ENVIRONMENT="development"
+
+# Logging
+ARK_OBSERVABILITY.LOGGING.LEVEL="debug"
+ARK_OBSERVABILITY.LOGGING.FORMAT="console"  # or "json" for production
+ARK_OBSERVABILITY.LOGGING.SLOW_QUERY_THRESHOLD="100ms"
+
+# New Relic (Optional but recommended for production)
+ARK_OBSERVABILITY.NEW_RELIC.LICENSE_KEY="..."
+ARK_OBSERVABILITY.NEW_RELIC.APP_LOG_FORWARDING_ENABLED="true"
+ARK_OBSERVABILITY.NEW_RELIC.DISTRIBUTED_TRACING_ENABLED="true"
+
+# Health Checks
+ARK_OBSERVABILITY.HEALTH_CHECKS.ENABLED="true"
+ARK_OBSERVABILITY.HEALTH_CHECKS.INTERVAL="30s"
+ARK_OBSERVABILITY.HEALTH_CHECKS.TIMEOUT="5s"
+ARK_OBSERVABILITY.HEALTH_CHECKS.CHECKS="database,redis"
+Frontend .env:
+bashVITE_CLERK_PUBLISHABLE_KEY=pk_test_...
 VITE_API_URL=http://localhost:8080/api/v1
-```
+Migration Note: ARK-1 ticket renamed all GARDENJOURNAL_* prefixes to ARK_*.
 
-**Migration Note:** Update all `GARDENJOURNAL_*` prefixes to `ARK_*` in your `.env` file.
-
----
-
-## Development Workflow
-
-### Backend
-```bash
-cd apps/backend
+Development Workflow
+Backend
+bashcd apps/backend
 go mod download
 cp .env.sample .env  # Edit with your credentials
 
@@ -260,18 +296,12 @@ task migrations:up   # Apply migrations
 task run            # Start server (port 8080)
 task test           # Run tests
 task tidy           # Format code
-```
-
-### Frontend
-```bash
-cd apps/web
+Frontend
+bashcd apps/web
 bun install
 bun dev             # Start dev server
-```
-
-### Database Setup
-```bash
-# Create NEW database (not gardenjournal)
+Database Setup
+bash# Create NEW database (not gardenjournal)
 createdb -U postgres ark
 
 # Grant permissions
@@ -280,17 +310,85 @@ psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA publ
 
 # Apply NEW migrations (assets & asset_logs tables)
 task migrations:up
+Migration Strategy:
+
+Starting fresh: Create new ark database, apply Ark migrations
+Have garden_journal data: Optionally export plants/observations, transform to assets/logs, import (not required for MVP)
+
+Getting JWT Tokens
+Browser Console:
+javascriptawait window.Clerk.session.getToken({ template: "api-test" })
 ```
 
-**Migration Strategy:**
-- **Starting fresh:** Create new `ark` database, apply Ark migrations
-- **Have garden_journal data:** Optionally export plants/observations, transform to assets/logs, import (not required for MVP)
+---
 
-### Getting JWT Tokens
-**Browser Console:**
-```javascript
-await window.Clerk.session.getToken({ template: "api-test" })
-```
+## Production Features
+
+### Observability
+
+**Structured Logging (Zerolog):**
+- Request-scoped context (request_id, trace_id, span_id)
+- User-scoped logging (user_id in all logs)
+- Different log levels: DEBUG, INFO, WARN, ERR, FTL
+- Configurable formats: console (dev) or JSON (production)
+- Slow query logging (configurable threshold)
+
+**New Relic APM Integration:**
+- Distributed tracing across services
+- Database query monitoring
+- Custom transaction naming
+- Error tracking with stack traces
+- Application log forwarding
+- Performance metrics and dashboards
+
+**Health Checks:**
+- Endpoint: `GET /health`
+- Checks database connectivity
+- Checks Redis connectivity
+- Configurable interval and timeout
+- Used by load balancers and monitoring
+
+### Background Job Processing
+
+**Redis-based Job Queue (Asynq):**
+- Async task processing
+- Job retries with exponential backoff
+- Scheduled/delayed jobs
+- Job prioritization
+- Worker pools
+
+**Current Job Types:**
+- Email sending (welcome emails, notifications)
+- Future: Report generation, data exports, cleanup tasks
+
+**Job Service** (`internal/lib/job/`):
+- Job enqueueing
+- Worker management
+- Error handling
+- Monitoring
+
+### Email Integration
+
+**Resend API:**
+- Transactional email sending
+- HTML email templates
+- Email tracking
+- High deliverability
+
+**Email Client** (`internal/lib/email/`):
+- Template rendering
+- Email sending
+- Error handling
+- Logging
+
+**Email Templates** (`templates/emails/`):
+- Welcome email
+- Future: Password reset, notifications, digests
+
+**Template Updates Needed:**
+- Change branding from "garden_journal" to "Ark"
+- Update sender name/email
+- Update template content for homelab context
 
 ---
 
@@ -320,206 +418,290 @@ Recent Logs:
 Question: How did I fix nginx?
 
 Provide a concise answer with specific dates when relevant.
-```
+Cost: ~$0.0003 per query (1000 queries ≈ $0.30)
+V1 Upgrade: Replace recent logs with FTS keyword search
+V2 Upgrade: Add vector embeddings for semantic search
 
-**Cost:** ~$0.0003 per query (1000 queries ≈ $0.30)
+Database Features
+Tables (NEW for Ark):
 
-**V1 Upgrade:** Replace recent logs with FTS keyword search  
-**V2 Upgrade:** Add vector embeddings for semantic search
+assets - Replaces plants table
+asset_logs - Replaces observations table
 
----
+Full-Text Search:
 
-## Database Features
+content_vector tsvector generated automatically on INSERT/UPDATE
+GIN index for fast FTS queries
+English language stemming
 
-**Tables (NEW for Ark):**
-- `assets` - Replaces `plants` table
-- `asset_logs` - Replaces `observations` table
+Indexes:
 
-**Full-Text Search:**
-- `content_vector` tsvector generated automatically on INSERT/UPDATE
-- GIN index for fast FTS queries
-- English language stemming
+user_id - Security-critical (all queries scoped)
+asset_id - Foreign key joins
+created_at - Chronological ordering
+content_vector - FTS performance
+tags - GIN index for array operations
+name (trigram) - Fuzzy asset name search
 
-**Indexes:**
-- `user_id` - Security-critical (all queries scoped)
-- `asset_id` - Foreign key joins
-- `created_at` - Chronological ordering
-- `content_vector` - FTS performance
-- `tags` - GIN index for array operations
-- `name` (trigram) - Fuzzy asset name search
+Triggers:
 
-**Triggers:**
-- Auto-update `updated_at` timestamp on changes
+Auto-update updated_at timestamp on changes
 
----
 
-## Testing
+Testing
+Manual Tests (tests/manual/*.http):
 
-**Manual Tests** (`tests/manual/*.http`):
-- `asset.http` - Asset CRUD with error cases (replaces plant.http)
-- `log.http` - Log CRUD with tags validation (replaces observation.http)
-- `ai.http` - AI queries with various questions (NEW)
-- `e2e_ai_flow.http` - Complete flow: create asset → add logs → query AI (NEW)
+asset.http - Asset CRUD with error cases (replaces plant.http)
+log.http - Log CRUD with tags validation (replaces observation.http)
+ai.http - AI queries with various questions (NEW)
+e2e_ai_flow.http - Complete flow: create asset → add logs → query AI (NEW)
+test_auth.http - Authentication testing (KEEP, update for Ark)
 
-**Integration Tests:**
-- Full middleware chain
-- Auth verification
-- Error handling (404, 400, 401, 504)
-- Uses `httptest` for request/response
+Integration Tests:
 
-**Unit Tests:**
-- Config loading
-- JWT verification (reuse from garden_journal)
-- Middleware behavior (reuse from garden_journal)
-- LLM client (NEW, with mocks)
+Full middleware chain
+Auth verification
+Error handling (404, 400, 401, 504)
+Uses httptest for request/response
+New Relic transaction tracking
 
-**Note:** Garden_journal test patterns can be reused. Update test data from plants/observations to assets/logs.
+Unit Tests:
 
----
+Config loading
+JWT verification (reuse from garden_journal)
+Middleware behavior (reuse from garden_journal)
+LLM client (NEW, with mocks)
 
-## Common Issues
+Note: Garden_journal test patterns can be reused. Update test data from plants/observations to assets/logs.
 
-**Port in use:**
-```bash
-lsof -ti:8080 | xargs kill -9
-```
+Common Issues
+Port in use:
+bashlsof -ti:8080 | xargs kill -9
+Database permissions:
+bashpsql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ark_user;"
+JWT invalid/expired:
 
-**Database permissions:**
-```bash
-psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ark_user;"
-```
+Verify at https://jwt.io
+Check iss matches CLERK.JWT_ISSUER
+Generate fresh token from browser console
 
-**JWT invalid/expired:**
-- Verify at https://jwt.io
-- Check `iss` matches `CLERK.JWT_ISSUER`
-- Generate fresh token from browser console
+OpenAI errors:
 
-**OpenAI errors:**
-- 401: Check `OPENAI.API_KEY`
-- 429: Rate limit, wait or upgrade plan
-- 504: Timeout, try simpler question
+401: Check OPENAI.API_KEY
+429: Rate limit, wait or upgrade plan
+504: Timeout, try simpler question
 
-**AI returns "no logs":**
-- Verify logs exist for asset
-- Check `asset_id` matches in request
+AI returns "no logs":
 
-**Module name errors:**
-- If you see import errors like `cannot find package "garden_journal"`, run ARK-1 ticket to rename module in `go.mod`
+Verify logs exist for asset
+Check asset_id matches in request
 
-**Old routes still registered:**
-- Remove plant/observation route registration from `router/v1/routes.go`
-- Delete old handler files after replacing with Ark equivalents
+Module name errors:
 
----
+If you see import errors like cannot find package "garden_journal", ARK-1 ticket already renamed module to ark
+Run go mod tidy to refresh dependencies
 
-## Error Handling
+Old routes still registered:
 
-**Custom Types** (`internal/lib/errs/`):
-- `NotFoundError` → 404
-- `ValidationError` → 400
-- `AuthError` → 401
-- Generic errors → 500
+Remove plant/observation route registration from router/v1/routes.go
+Delete old handler files after replacing with Ark equivalents
 
-**Global Handler:**
-- Logs with context (request_id, user_id)
-- Returns JSON errors
-- Hides stack traces in production
+Redis connection errors:
 
-**Note:** Error handling from garden_journal can be **reused as-is**. No changes needed to middleware/global.go.
+Verify Redis is running: redis-cli ping
+Check REDIS.ADDRESS in .env
 
----
+Email sending failures:
 
-## What to Reuse from Garden Journal
+Verify Resend API key is valid
+Check Resend dashboard for errors
+Review email service logs
 
-**✅ REUSE (no changes needed):**
-- Authentication middleware (`internal/middleware/auth.go`)
-- JWT verification (`internal/lib/jwt/`)
-- Error types (`internal/lib/errs/`)
-- Global middleware (CORS, logging, recovery)
-- Server configuration
-- Clerk integration
-- Database connection pooling
-- Migration system structure (just new migration files)
-- Validation package
-- Config management pattern (Koanf)
 
-**🔄 ADAPT (update for Ark domain):**
-- Handlers (plant → asset, observation → log)
-- Services (business logic for assets/logs)
-- Repositories (data access for assets/logs)
-- Models (Asset, AssetLog instead of Plant, Observation)
-- Routes (update endpoints)
-- Frontend components (plants → assets, observations → logs)
-- API client (update endpoints)
-- TanStack Query hooks (update query keys)
+Error Handling
+Custom Types (internal/lib/errs/):
 
-**➕ ADD (new for Ark):**
-- LLM client (`internal/lib/llm/`)
-- AI service (`internal/service/ai_service.go`)
-- AI handler (`internal/handler/ai.go`)
-- AI DTOs (`internal/model/ai.go`)
-- AI frontend components (`components/ai/`)
-- Full-text search in log repository
-- OpenAI configuration
-- AI query endpoint and routes
+NotFoundError → 404
+ValidationError → 400
+AuthError → 401
+Generic errors → 500
 
-**❌ DELETE (no longer needed):**
-- Plant-related files (handlers, services, repos, models)
-- Observation-related files (handlers, services, repos, models)
-- Plant/observation routes
-- Plant/observation frontend components
-- Old test files for plants/observations
----
+Global Handler (internal/middleware/global.go):
 
-## Future Roadmap
+Logs errors with context (request_id, user_id, trace_id, span_id)
+Returns JSON errors
+Hides stack traces in production
+Integrates with New Relic error tracking
 
-### V1 (Planned - 4-6 weeks)
-- **FTS Search:** Replace "recent logs" with keyword-based full-text search
-- **AI Enhancements:** Query history, copy answer, regenerate, suggested questions
-- **UI Polish:** Dark mode, markdown rendering, tag autocomplete, export
-- **Performance:** Redis caching, rate limiting, pagination controls
+Note: Error handling from garden_journal can be reused as-is. No changes needed to middleware/global.go.
 
-### V2 (Future - 8-10 weeks)
-- **Vector Search:** Semantic search with OpenAI embeddings + pgvector
-- **Multi-Asset Queries:** Search across all assets ("show me all nginx fixes")
-- **Collaboration:** Team workspaces, shared assets, activity feeds
-- **Integrations:** Webhooks, Slack/Discord, API automation
-- **Analytics:** Usage dashboards, common issues, resolution tracking
-- **Mobile:** PWA, offline mode, quick log entry
+What to Reuse from Garden Journal
+✅ KEEP (production-ready infrastructure):
 
-### V3+ (Future)
-- **Advanced AI:** Streaming responses, custom instructions, AI-suggested tags
-- **Automation:** Auto-tagging, pattern recognition, anomaly detection
-- **Extended Integrations:** Monitoring tools (Prometheus, Grafana), ticketing systems
+Observability:
 
----
+New Relic integration (internal/logger/logger.go)
+Structured logging with Zerolog
+Health check system
+Request tracing
 
-## Security Notes
 
-- All queries scoped by `user_id` (multi-tenancy)
-- Asset ownership verified before AI queries
-- JWT validation on every request
-- CORS configured for allowed origins
-- Input validation (max lengths, required fields)
-- API keys never committed (use .env, add to .gitignore)
-- Rate limiting planned for V1
+Background Jobs:
 
----
+Redis integration (internal/lib/job/)
+Asynq job queue
+Worker management
+Job handlers
 
-## Performance Considerations
 
-**Current (MVP):**
-- Recent 10 logs: <100ms query time
-- AI response: 5-15s typical (LLM latency)
-- No caching (comes in V1)
+Email System:
 
-**Optimizations (V1):**
-- Redis for response caching
-- FTS with ranked results
-- Connection pooling (pgxpool)
-- Query result pagination
+Resend client (internal/lib/email/)
+Email templates (templates/emails/)
+Email sending infrastructure
 
-**Scaling (V2):**
-- Vector search with pgvector
-- Hybrid search (FTS + vector)
-- Background job processing for expensive queries
+
+Authentication & Security:
+
+Clerk middleware (internal/middleware/auth.go)
+JWT verification (internal/lib/jwt/)
+Two-phase auth pattern
+
+
+Infrastructure:
+
+Error types (internal/lib/errs/)
+Global middleware (CORS, logging, recovery)
+Server configuration
+Database connection pooling
+Migration system
+Validation package
+Config management (Koanf)
+
+
+
+🔄 ADAPT (update for Ark domain):
+
+Handlers (plant → asset, observation → log)
+Services (business logic for assets/logs)
+Repositories (data access for assets/logs)
+Models (Asset, AssetLog instead of Plant, Observation)
+Routes (update endpoints)
+Frontend components (plants → assets, observations → logs)
+API client (update endpoints)
+TanStack Query hooks (update query keys)
+Email templates (update branding from garden_journal to Ark)
+OpenAPI spec (update for Ark endpoints)
+
+➕ ADD (new for Ark):
+
+LLM client (internal/lib/llm/)
+AI service (internal/service/ai_service.go)
+AI handler (internal/handler/ai.go)
+AI DTOs (internal/model/ai.go)
+AI frontend components (components/ai/)
+Full-text search in log repository
+OpenAI configuration
+AI query endpoint and routes
+
+❌ DELETE (domain-specific):
+
+Plant-related files (handlers, services, repos, models)
+Observation-related files (handlers, services, repos, models)
+Plant/observation routes
+Plant/observation frontend components
+Old test files for plants/observations
+Weather API integration (not needed for Ark, but keep code for reference)
+
+
+Future Roadmap
+V1 (Planned - 4-6 weeks)
+
+FTS Search: Replace "recent logs" with keyword-based full-text search
+AI Enhancements: Query history, copy answer, regenerate, suggested questions
+UI Polish: Dark mode, markdown rendering, tag autocomplete, export
+Performance: Redis caching for AI responses, rate limiting, pagination controls
+Background Jobs: Scheduled log backups, data exports
+
+V2 (Future - 8-10 weeks)
+
+Vector Search: Semantic search with OpenAI embeddings + pgvector
+Multi-Asset Queries: Search across all assets ("show me all nginx fixes")
+Collaboration: Team workspaces, shared assets, activity feeds
+Integrations: Webhooks, Slack/Discord, API automation
+Analytics: Usage dashboards, common issues, resolution tracking
+Mobile: PWA, offline mode, quick log entry
+Email Notifications: Asset alerts, weekly digests
+
+V3+ (Future)
+
+Advanced AI: Streaming responses, custom instructions, AI-suggested tags
+Automation: Auto-tagging, pattern recognition, anomaly detection
+Extended Integrations: Monitoring tools (Prometheus, Grafana), ticketing systems
+Advanced Email: Rich templates, personalization, A/B testing
+
+
+Security Notes
+
+All queries scoped by user_id (multi-tenancy)
+Asset ownership verified before AI queries
+JWT validation on every request
+CORS configured for allowed origins
+Input validation (max lengths, required fields)
+API keys never committed (use .env, add to .gitignore)
+Rate limiting planned for V1
+SQL injection protection (parameterized queries)
+XSS protection (Echo's built-in)
+
+
+Performance Considerations
+Current (MVP):
+
+Recent 10 logs: <100ms query time
+AI response: 5-15s typical (LLM latency)
+No caching (comes in V1)
+
+Optimizations (V1):
+
+Redis for AI response caching
+FTS with ranked results
+Connection pooling (pgxpool)
+Query result pagination
+Background job processing for expensive operations
+
+Scaling (V2):
+
+Vector search with pgvector
+Hybrid search (FTS + vector)
+Horizontal scaling with load balancer
+Database read replicas
+CDN for static assets
+
+
+Monitoring & Observability
+New Relic Dashboards:
+
+Transaction throughput and response times
+Database query performance
+Error rates and types
+AI query latency and cost tracking
+Background job success/failure rates
+
+Key Metrics to Track:
+
+API endpoint latency (p50, p95, p99)
+Database connection pool utilization
+Redis job queue depth
+OpenAI API latency and token usage
+Email delivery rates
+User authentication success/failure
+Health check status
+
+Alerts (Recommended):
+
+API error rate > 5%
+Database connection pool exhausted
+Redis job queue backlog > 1000
+Health check failures
+OpenAI API errors
+Email delivery failures
