@@ -1,498 +1,529 @@
-#  Garden Journal Project Context
+# Ark Project Context
 
-##  Project Overview
-**Garden Journal** is a modern web application for plant care and garden management built with **Go (backend)** and **TypeScript/React (frontend)**.  
-It follows a **monorepo architecture** using **Turborepo** for efficient builds and development workflow.
+## ⚠️ Project Transition Notice
+
+**This repository was previously the `garden_journal` project and is being repurposed for Ark.**
+
+**What this means:**
+- Any references to "garden_journal", "plants", "observations" should be **replaced** with Ark equivalents (assets, logs)
+- Old code/files are being **migrated or removed** - see MVP tickets (ARK-1 through ARK-22)
+- If you encounter garden_journal code, it should be **updated to Ark** or **deleted**
+- Configuration may still reference old names - these need updating
+
+**Key Changes:**
+| Garden Journal | Ark Equivalent |
+|----------------|----------------|
+| Plants | Assets |
+| Observations | Logs (AssetLogs) |
+| Plant species/variety | Asset type/hostname |
+| Plant notes | Log content |
+| - | AI query (new feature) |
+
+**During Development:**
+- Prioritize Ark implementation over garden_journal compatibility
+- Remove old plant/observation routes, handlers, models as you build Ark equivalents
+- Update import paths from `garden_journal` to `ark`
+- Rename module in `go.mod` from `garden_journal` to `ark`
+- Update database name from `gardenjournal` to `ark`
 
 ---
 
-## ⚙ Technical Stack
+## Overview
+**Ark** is a homelab asset tracking and configuration log management application with AI-powered search. Built with **Go (backend)** and **TypeScript/React (frontend)** in a **Turborepo** monorepo.
 
-### 🐹 Backend (Go)
-- **Go 1.24+**
-- **Echo** framework for REST API
-- **PostgreSQL 16+** with connection pooling
-- **Redis 8+** for background jobs
-- **Clerk SDK** for authentication
-- **New Relic** for APM
-- **Resend** for email services
-
-### ⚛ Frontend (TypeScript / React)
-- **React 19.1.0**
-- **TypeScript 5.8.2**
-- **Vite 7.0.4**
-- **TanStack Query** for data fetching
-- **Clerk** for authentication
-- **Tailwind CSS** for styling
-- **React Router** for navigation
+**Core Use Case:** Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes. AI assistant helps query logs in natural language.
 
 ---
 
-## 🏗 Architecture
+## Tech Stack
 
-###  Backend Structure
+**Backend:**
+- Go 1.24+, Echo framework
+- PostgreSQL 16+ (connection pooling, full-text search, trigram matching)
+- Clerk SDK v2 for authentication
+- OpenAI API (gpt-4o-mini) for AI queries
+- Zerolog for structured logging
+
+**Frontend:**
+- React 19.1.0, TypeScript 5.8.2, Vite 7.0.4
+- TanStack Query for data fetching
+- Clerk for authentication
+- Tailwind CSS, React Router
+
+---
+
+## Architecture
+
+### Backend Structure
 ```bash
 apps/backend/
-├── cmd/                    # Application entry points
-│   └── gardenjournal/         # Main application
-├── internal/               # Private application code
-│   ├── config/                # Configuration management (Koanf-based)
-│   ├── database/              # Database connections and migrations
-│   ├── handler/               # HTTP request handlers (Echo handlers)
-│   │   ├── plant.go              # Plant CRUD operations
-│   │   └── observation.go        # Observation CRUD operations
-│   ├── service/               # Business logic layer
-│   ├── repository/            # Data access layer (PostgreSQL)
-│   ├── model/                 # Domain models and DTOs
-│   ├── middleware/            # HTTP middleware
-│   │   ├── auth.go               # Two-phase authentication
-│   │   ├── global.go             # Error handling, logging, CORS
-│   │   └── middleware.go         # Middleware aggregator
-│   ├── router/                # Route registration
-│   │   └── v1/                   # API v1 routes
-│   ├── validation/            # Request validation
-│   ├── lib/                   # Shared utilities
-│   │   ├── jwt/                  # JWT verification helpers
-│   │   └── errs/                 # Custom error types
-│   └── server/                # Server configuration
-├── templates/              # Email templates
-├── static/                 # Static files
-└── tests/                  # Test suites
+├── cmd/ark/                   # Main application entry point (was cmd/gardenjournal)
+├── internal/
+│   ├── config/                # Koanf-based configuration
+│   ├── database/migrations/   # SQL migrations (tern)
+│   ├── handler/               # HTTP handlers (Echo)
+│   │   ├── asset.go              # Asset CRUD (replaces plant.go)
+│   │   ├── log.go                # Log CRUD (replaces observation.go)
+│   │   └── ai.go                 # AI query endpoint (NEW)
+│   ├── service/               # Business logic
+│   │   ├── asset_service.go      # (replaces plant_service.go)
+│   │   ├── log_service.go        # (replaces observation_service.go)
+│   │   └── ai_service.go         # RAG implementation (NEW)
+│   ├── repository/            # Data access (PostgreSQL)
+│   │   ├── asset_repository.go   # (replaces plant_repository.go)
+│   │   └── log_repository.go     # Includes FTS methods (replaces observation_repository.go)
+│   ├── model/                 # Domain models & DTOs
+│   │   ├── asset.go              # (replaces plant.go)
+│   │   ├── log.go                # (replaces observation.go)
+│   │   └── ai.go                 # (NEW)
+│   ├── middleware/            # Auth, CORS, logging, errors (reuse from garden_journal)
+│   ├── router/v1/             # Route registration
+│   ├── lib/
+│   │   ├── jwt/                  # JWT verification (reuse)
+│   │   ├── errs/                 # Custom error types (reuse)
+│   │   └── llm/                  # LLM client (OpenAI) (NEW)
+│   └── server/                # Server config (reuse)
+└── tests/
     ├── integration/           # Integration tests
-    └── manual/                # Manual test scripts (.http files)
-````
+    └── manual/                # .http files (asset, log, ai, e2e)
+```
 
-###  Key Backend Features
-
-1. **Configuration Management**
-
-   * Environment-based configuration using Koanf
-   * Structured validation
-   * Support for multiple environments
-
-2. **Database Layer**
-
-   * PostgreSQL with connection pooling
-   * Migration system using `tern`
-   * Configurable connection settings
-
-3. **Authentication & Security**
-
-   **Two-Phase Authentication Pattern:**
-
-   * **Phase 1 - ClerkAuthMiddleware** (`internal/middleware/auth.go`)
-     - Applied globally to all `/api/v1/*` routes
-     - Extracts JWT from `Authorization: Bearer <token>` header
-     - Verifies token using Clerk SDK v2 (`clerk/clerk-sdk-go/v2`)
-     - Stores validated `SessionClaims` in Echo context
-     - Returns 401 for missing, invalid, or expired tokens
-
-   * **Phase 2 - RequireAuth** (`internal/middleware/auth.go`)
-     - Applied to individual route groups (plants, observations)
-     - Retrieves `SessionClaims` from context
-     - Extracts user metadata (user_id, role, permissions)
-     - Sets user data in context for downstream handlers
-
-   **JWT Verification** (`internal/lib/jwt/clerk.go`):
-   - RS256 signature validation
-   - Issuer verification against configured Clerk domain
-   - Expiration checking with detailed error messages
-   - Bearer token extraction with format validation
-
-   **Configuration** (`internal/config/config.go`):
-   - Clerk Secret Key (from Clerk Dashboard)
-   - JWT Issuer URL (e.g., `https://your-app.clerk.accounts.dev`)
-   - Optional PEM public key for manual verification
-
-   **Security Features:**
-   - CORS with configurable allowed origins
-   - Custom error handling (no stack traces in production)
-   - Structured logging with request IDs
-   - User-scoped data access (all queries filtered by user_id)
-
-4. **Background Processing**
-
-   * Redis-based job queue
-   * Async task processing
-   * Email notifications
-
-5. **Observability**
-
-   * New Relic APM integration
-   * Structured logging (`zerolog`)
-   * Health checks
-   * Performance monitoring
-
----
-
-###  Frontend Structure
-
+### Frontend Structure
 ```bash
-apps/frontend/
-├── src/
-│   ├── components/   # Reusable UI components
-│   ├── features/     # Feature-specific code
-│   ├── hooks/        # Custom React hooks
-│   ├── pages/        # Route pages
-│   ├── api/          # API integration
-│   ├── utils/        # Utility functions
-│   └── styles/       # Global styles
-└── tests/            # Frontend tests
+apps/web/src/
+├── components/
+│   ├── assets/                # AssetList, AssetCard, AssetForm (replaces plants/)
+│   ├── logs/                  # LogList, LogCard, LogForm (replaces observations/)
+│   ├── ai/                    # AIQueryForm, AIResponse (NEW)
+│   └── layout/                # Navbar, Layout (reuse, update branding)
+├── hooks/                     # useAssets, useLogs, useAIQuery (replace usePlants, useObservations)
+├── pages/                     # Dashboard, AssetDetailPage (replace PlantDashboard, etc.)
+├── lib/                       # api.ts (Axios + auth), clerk.ts (reuse)
+├── types/                     # TypeScript interfaces (update for Ark domain)
+└── App.tsx                    # Routing (update routes)
 ```
 
 ---
 
-##  Development Workflow
+## Domain Models
 
-###  Backend Development
+### Asset
+Homelab asset (server, VM, container, NAS, network equipment, other)
 
-1. **Environment Setup**
+| Field | Type | Notes |
+|-------|------|-------|
+| id | UUID | Primary key |
+| user_id | string | Clerk user ID (multi-tenancy) |
+| name | string | Required, max 100 chars |
+| type | string? | server, vm, nas, container, network, other |
+| hostname | string? | Max 255 chars |
+| metadata | JSON | Flexible specs (CPU, RAM, IP, etc.) |
+| created_at | timestamp | Auto-set |
+| updated_at | timestamp | Auto-updated by trigger |
 
-   ```bash
-   cd apps/backend
-   go mod download
-   cp .env.sample .env
-   # Edit .env with your Clerk credentials and database settings
-   ```
+### AssetLog
+Configuration change or troubleshooting log
 
-2. **Database Management**
+| Field | Type | Notes |
+|-------|------|-------|
+| id | UUID | Primary key |
+| asset_id | UUID | Foreign key (cascade delete) |
+| user_id | string | Denormalized for performance |
+| content | string | Required, 2-10,000 chars |
+| tags | string[] | Optional, max 20 tags, 50 chars each |
+| content_vector | tsvector | Generated column for FTS (hidden from API) |
+| created_at | timestamp | Auto-set |
+| updated_at | timestamp | Auto-updated by trigger |
 
-   ```bash
-   task migrations:new name=<migration_name>  # Create migration
-   task migrations:up                         # Apply migrations
-
-   # Grant database permissions (if needed)
-   psql -U postgres -d gardenjournal -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO <db_user>;"
-   ```
-
-3. **Running the Server**
-
-   ```bash
-   task run    # Start server on port 8080
-   task test   # Run all tests
-   task tidy   # Format and tidy code
-   ```
-
-4. **Development Best Practices**
-
-   **Incremental Development:**
-   - Break large features into small, testable steps
-   - Write implementation + tests for each step
-   - Verify tests pass before proceeding
-   - Commit after each completed step with clear messages
-
-   **Testing Workflow:**
-   - Write unit tests for new functions (`*_test.go` files)
-   - Add integration tests for route changes
-   - Use manual `.http` files to verify with real data
-   - Run `task test` to ensure all tests pass
-
-   **Git Workflow:**
-   - Create feature branches for new work
-   - Make atomic commits with descriptive messages
-   - Include test files in the same commit as implementation
-   - Push commits regularly to remote branch
-   - Create a pull requests once all features in ticket are complete
-
-   **Debugging:**
-   - Check server logs for detailed error messages
-   - Use structured logging to trace request flow
-   - Verify JWT tokens at https://jwt.io
-   - Test database permissions with `psql` commands
-   - Kill orphaned processes: `lsof -ti:8080 | xargs kill -9`
-
-5. **Configuration Management**
-
-   **Required Environment Variables:**
-   ```bash
-   # Server
-   GARDENJOURNAL_SERVER.PORT="8080"
-
-   # Database
-   GARDENJOURNAL_DATABASE.HOST="localhost"
-   GARDENJOURNAL_DATABASE.USER="your_db_user"
-   GARDENJOURNAL_DATABASE.PASSWORD="your_db_password"
-   GARDENJOURNAL_DATABASE.NAME="gardenjournal"
-
-   # Clerk Authentication
-   GARDENJOURNAL_AUTH.CLERK.SECRET_KEY="sk_test_..."
-   GARDENJOURNAL_AUTH.CLERK.JWT_ISSUER="https://your-app.clerk.accounts.dev"
-   ```
-
-6. **Getting Fresh JWT Tokens**
-
-   **Method 1 - Browser Console:**
-   ```javascript
-   await window.Clerk.session.getToken({ template: "api-test" })
-   ```
-
-   **Method 2 - Network Tab:**
-   - Open DevTools Network tab
-   - Make authenticated request in frontend
-   - Copy Bearer token from Authorization header
-
-### ⚛ Frontend Development
-
-1. **Setup**
-
-   ```bash
-   bun install
-   ```
-
-2. **Development**
-
-   ```bash
-   bun dev     # Start dev server
-   bun build   # Production build
-   bun lint    # Run linter
-   ```
+**Example Log:**
+```
+Content: "Fixed nginx by updating /etc/nginx/nginx.conf and restarting with systemctl restart nginx"
+Tags: ["nginx", "web-server", "fix"]
+```
 
 ---
 
-##  API Structure
+## API Endpoints
 
-**Endpoint Pattern:**
+**Assets:**
 ```
-/api/v1/<resource>
-```
-
-**Available Resources:**
-- `/api/v1/plants` - Plant management (CRUD)
-- `/api/v1/observations` - Observation tracking (CRUD)
-
-**Middleware Chain:**
-```
-Request
-  ↓
-Global Middleware (CORS, Logging, Recovery)
-  ↓
-ClerkAuthMiddleware (JWT Verification) [/api/v1/*]
-  ↓
-RequireAuth (Claims Extraction) [Resource-specific]
-  ↓
-Validation Middleware
-  ↓
-Handler (Business Logic)
-  ↓
-Global Error Handler
-  ↓
-Response
+GET    /api/v1/assets              # List (paginated)
+POST   /api/v1/assets              # Create
+GET    /api/v1/assets/:id          # Get single
+PATCH  /api/v1/assets/:id          # Update
+DELETE /api/v1/assets/:id          # Delete (cascades to logs)
 ```
 
-**Request Flow Example:**
-1. Client sends `GET /api/v1/plants` with `Authorization: Bearer <jwt>`
-2. Global middleware logs request and adds request_id
-3. ClerkAuthMiddleware verifies JWT and stores claims in context
-4. RequireAuth extracts user_id from claims
-5. Handler validates request and queries database (filtered by user_id)
-6. Response sent with structured JSON
-7. Request logged with duration, status, and user_id
+**Logs:**
+```
+GET    /api/v1/assets/:id/logs     # List for asset (paginated)
+POST   /api/v1/assets/:id/logs     # Create for asset
+GET    /api/v1/logs/:id            # Get single
+PATCH  /api/v1/logs/:id            # Update
+DELETE /api/v1/logs/:id            # Delete
+```
 
-**Response Format:**
+**AI:**
+```
+POST   /api/v1/ai/query            # Query logs with natural language
+```
+
+**OLD Endpoints (TO BE REMOVED):**
+```
+❌ /api/v1/plants                  # DELETE - replaced by /assets
+❌ /api/v1/observations            # DELETE - replaced by /logs
+```
+
+**Request/Response Examples:**
 ```json
+// AI Query Request
 {
-  "data": [...],
-  "pagination": {
-    "total": 100,
-    "page": 1,
-    "limit": 20
-  }
+  "asset_id": "550e8400-e29b-41d4-a716-446655440000",
+  "query": "How did I fix nginx?"
 }
-```
 
-**Error Response Format:**
-```json
+// AI Query Response
 {
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Invalid or expired token"
-  }
+  "answer": "You fixed nginx on 2024-03-15 by updating /etc/nginx/nginx.conf and restarting the service.",
+  "sources": ["660e8400-e29b-41d4-a716-446655440001"],
+  "method": "recent"  // MVP: "recent", V1: "fts", V2: "vector"
 }
 ```
 
 ---
 
-##  API Integration (Frontend)
+## Authentication Flow
 
-* REST API with **OpenAPI/Swagger specification**
-* Type-safe API client using **ts-rest**
-* Automatic type generation from OpenAPI specs
-* Request/response validation
-* Error handling with retries
+**Two-Phase Pattern:**
+
+1. **ClerkAuthMiddleware** (global on `/api/v1/*`)
+   - Extracts JWT from `Authorization: Bearer <token>` header
+   - Verifies with Clerk SDK v2
+   - Stores `SessionClaims` in context
+   - Returns 401 on failure
+
+2. **RequireAuth** (per route group)
+   - Extracts user_id from claims
+   - Sets user context for handlers
+   - All queries scoped to user_id (security-critical)
+
+**Request Flow:**
+```
+Request → CORS/Logging → ClerkAuth → RequireAuth → Validation → Handler → ErrorHandler → Response
+```
+
+**Note:** Authentication middleware from garden_journal can be **reused as-is**. Update route groups to apply to `/assets` and `/logs` instead of `/plants` and `/observations`.
 
 ---
 
-##  Error Handling
+## Configuration
 
-**Custom Error Types** (`internal/lib/errs/`):
-* `HTTPError` - Structured error responses with status codes
-* Error codes: `UNAUTHORIZED`, `INTERNAL_SERVER_ERROR`, `VALIDATION_ERROR`, etc.
-* Consistent JSON error format across all endpoints
+**Required Environment Variables:**
+```bash
+# Server
+ARK_SERVER.PORT="8080"                    # Was GARDENJOURNAL_SERVER.PORT
 
-**Global Error Handler** (`internal/middleware/global.go`):
-* Centralized error handling for all routes
-* Logs errors with request context (request_id, user_id, method, path)
-* Returns appropriate HTTP status codes
-* Hides internal error details in production
+# Database (PostgreSQL 16+)
+ARK_DATABASE.HOST="localhost"             # Was GARDENJOURNAL_DATABASE.HOST
+ARK_DATABASE.USER="ark_user"              # Was GARDENJOURNAL_DATABASE.USER
+ARK_DATABASE.PASSWORD="your_password"     # Was GARDENJOURNAL_DATABASE.PASSWORD
+ARK_DATABASE.NAME="ark"                   # Was GARDENJOURNAL_DATABASE.NAME="gardenjournal"
 
-**Error Flow:**
+# Clerk Authentication (REUSE - no change)
+ARK_AUTH.CLERK.SECRET_KEY="sk_test_..."
+ARK_AUTH.CLERK.JWT_ISSUER="https://your-app.clerk.accounts.dev"
+
+# OpenAI (NEW)
+ARK_OPENAI.API_KEY="sk-..."
+ARK_OPENAI.MODEL="gpt-4o-mini"
 ```
-Handler Error → Custom HTTPError → Global Error Handler → JSON Response
+
+**Frontend `.env`:**
+```bash
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+VITE_API_URL=http://localhost:8080/api/v1
 ```
 
-**Logging:**
-* Structured logging with Zerolog
-* Request-scoped context (request_id, trace_id, span_id)
-* Different log levels: DEBUG, INFO, WARN, ERR, FTL
-* Integration with New Relic for distributed tracing
+**Migration Note:** Update all `GARDENJOURNAL_*` prefixes to `ARK_*` in your `.env` file.
 
 ---
 
-##  Testing Strategy
+## Development Workflow
 
 ### Backend
+```bash
+cd apps/backend
+go mod download
+cp .env.sample .env  # Edit with your credentials
 
-**Unit Tests:**
-* Configuration loading (`internal/config/config_test.go`)
-* JWT verification helpers (`internal/lib/jwt/clerk_test.go`)
-* Middleware behavior (`internal/middleware/auth_test.go`)
-* Mock-based testing with `testify/assert` and `testify/require`
-
-**Integration Tests** (`tests/integration/`):
-* Full middleware chain testing
-* Route-level authentication verification
-* Error handling and HTTP status codes
-* Uses `httptest` for request/response simulation
-* Tests all CRUD operations (GET, POST, PUT, DELETE)
-
-**Manual Testing** (`tests/manual/`):
-* `.http` files for REST client testing (Bruno, HTTPie, Postman, VS Code REST Client)
-* Comprehensive test cases for all auth scenarios:
-  - Missing Authorization header
-  - Invalid token formats
-  - Malformed JWTs
-  - Valid JWT authentication
-* Includes verification checklists and troubleshooting guides
-
-**Testing Best Practices:**
-* Write tests alongside implementation (TDD approach)
-* Test both positive and negative cases
-* Use table-driven tests for multiple scenarios
-* Verify error messages and status codes
-* Test middleware chain ordering
-* Run `task test` before committing
+task migrations:up   # Apply migrations
+task run            # Start server (port 8080)
+task test           # Run tests
+task tidy           # Format code
+```
 
 ### Frontend
-
-* Component tests with **React Testing Library**
-* Integration tests
-* E2E tests with **Cypress**
-
----
-
-##  Deployment & Operations
-
-1. **Environment Configuration**
-
-   * Environment-specific settings
-   * Secret management
-   * Feature flags
-
-2. **Monitoring**
-
-   * APM with New Relic
-   * Error tracking
-   * Performance monitoring
-   * Log aggregation
-
-3. **Security**
-
-   * Authentication with Clerk
-   * Authorization middleware
-   * Input validation
-   * Rate limiting
-   * CORS policies
-
----
-
-##  Common Issues & Troubleshooting
-
-### Port Already in Use
 ```bash
-# Error: listen tcp :8080: bind: address already in use
+cd apps/web
+bun install
+bun dev             # Start dev server
+```
+
+### Database Setup
+```bash
+# Create NEW database (not gardenjournal)
+createdb -U postgres ark
+
+# Grant permissions
+psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ark_user;"
+psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ark_user;"
+
+# Apply NEW migrations (assets & asset_logs tables)
+task migrations:up
+```
+
+**Migration Strategy:**
+- **Starting fresh:** Create new `ark` database, apply Ark migrations
+- **Have garden_journal data:** Optionally export plants/observations, transform to assets/logs, import (not required for MVP)
+
+### Getting JWT Tokens
+**Browser Console:**
+```javascript
+await window.Clerk.session.getToken({ template: "api-test" })
+```
+
+---
+
+## AI Implementation (RAG)
+
+**MVP Approach (Current):**
+1. User asks question about asset
+2. Verify asset ownership (security)
+3. Retrieve **recent 10 logs** from asset
+4. Build prompt: system instructions + asset context + logs + question
+5. Call OpenAI API (30s timeout)
+6. Return answer with source log IDs
+
+**Prompt Structure:**
+```
+You are a homelab assistant. Answer based ONLY on the following logs.
+
+Asset: Homelab Server
+
+Recent Logs:
+[1] [2024-03-15] Fixed nginx by updating /etc/nginx/nginx.conf...
+    Tags: nginx, fix
+
+[2] [2024-03-10] Nginx throwing 502 errors...
+    Tags: nginx, error
+
+Question: How did I fix nginx?
+
+Provide a concise answer with specific dates when relevant.
+```
+
+**Cost:** ~$0.0003 per query (1000 queries ≈ $0.30)
+
+**V1 Upgrade:** Replace recent logs with FTS keyword search  
+**V2 Upgrade:** Add vector embeddings for semantic search
+
+---
+
+## Database Features
+
+**Tables (NEW for Ark):**
+- `assets` - Replaces `plants` table
+- `asset_logs` - Replaces `observations` table
+
+**Full-Text Search:**
+- `content_vector` tsvector generated automatically on INSERT/UPDATE
+- GIN index for fast FTS queries
+- English language stemming
+
+**Indexes:**
+- `user_id` - Security-critical (all queries scoped)
+- `asset_id` - Foreign key joins
+- `created_at` - Chronological ordering
+- `content_vector` - FTS performance
+- `tags` - GIN index for array operations
+- `name` (trigram) - Fuzzy asset name search
+
+**Triggers:**
+- Auto-update `updated_at` timestamp on changes
+
+---
+
+## Testing
+
+**Manual Tests** (`tests/manual/*.http`):
+- `asset.http` - Asset CRUD with error cases (replaces plant.http)
+- `log.http` - Log CRUD with tags validation (replaces observation.http)
+- `ai.http` - AI queries with various questions (NEW)
+- `e2e_ai_flow.http` - Complete flow: create asset → add logs → query AI (NEW)
+
+**Integration Tests:**
+- Full middleware chain
+- Auth verification
+- Error handling (404, 400, 401, 504)
+- Uses `httptest` for request/response
+
+**Unit Tests:**
+- Config loading
+- JWT verification (reuse from garden_journal)
+- Middleware behavior (reuse from garden_journal)
+- LLM client (NEW, with mocks)
+
+**Note:** Garden_journal test patterns can be reused. Update test data from plants/observations to assets/logs.
+
+---
+
+## Common Issues
+
+**Port in use:**
+```bash
 lsof -ti:8080 | xargs kill -9
-task run
 ```
 
-### Database Permission Denied
+**Database permissions:**
 ```bash
-# Error: permission denied for table plants
-psql -U postgres -d gardenjournal -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO <db_user>;"
-psql -U postgres -d gardenjournal -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO <db_user>;"
+psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ark_user;"
 ```
 
-### JWT Token Invalid/Expired
-- Decode token at https://jwt.io to check expiration
-- Verify `iss` claim matches `CLERK.JWT_ISSUER` in .env
-- Generate fresh token from browser console (see "Getting Fresh JWT Tokens" above)
-- Ensure Clerk Secret Key is correct
+**JWT invalid/expired:**
+- Verify at https://jwt.io
+- Check `iss` matches `CLERK.JWT_ISSUER`
+- Generate fresh token from browser console
 
-### 401 Unauthorized Errors
-1. Check Authorization header is present: `Authorization: Bearer <token>`
-2. Verify token format (should have 3 parts separated by dots)
-3. Check server logs for specific error message
-4. Confirm Clerk credentials in .env are correct
-5. Test with a fresh token
+**OpenAI errors:**
+- 401: Check `OPENAI.API_KEY`
+- 429: Rate limit, wait or upgrade plan
+- 504: Timeout, try simpler question
 
-### Database Connection Issues
-```bash
-# Test connection
-psql -U <db_user> -d gardenjournal -c "SELECT 1"
+**AI returns "no logs":**
+- Verify logs exist for asset
+- Check `asset_id` matches in request
 
-# Check if database exists
-psql -U postgres -l | grep gardenjournal
-```
+**Module name errors:**
+- If you see import errors like `cannot find package "garden_journal"`, run ARK-1 ticket to rename module in `go.mod`
 
-### Server Won't Start
-1. Check .env file exists and has required variables
-2. Verify database is running
-3. Verify Redis is running (if using background jobs)
-4. Check for port conflicts
-5. Review server logs for configuration errors
+**Old routes still registered:**
+- Remove plant/observation route registration from `router/v1/routes.go`
+- Delete old handler files after replacing with Ark equivalents
 
 ---
 
-##  Future Considerations
+## Error Handling
 
-1. **Scalability**
+**Custom Types** (`internal/lib/errs/`):
+- `NotFoundError` → 404
+- `ValidationError` → 400
+- `AuthError` → 401
+- Generic errors → 500
 
-   * Horizontal scaling of API
-   * Caching strategies (Redis for session data)
-   * Database optimization (indexes, query optimization)
-   * Connection pooling tuning
+**Global Handler:**
+- Logs with context (request_id, user_id)
+- Returns JSON errors
+- Hides stack traces in production
 
-2. **Feature Enhancements**
+**Note:** Error handling from garden_journal can be **reused as-is**. No changes needed to middleware/global.go.
 
-   * Real-time updates (WebSockets)
-   * Mobile responsiveness
-   * Offline support (PWA)
-   * Data export/import (CSV, JSON)
-   * Image upload for plant photos
-   * Reminder notifications for watering
+---
 
-3. **Integrations**
+## What to Reuse from Garden Journal
 
-   * Weather API integration
-   * Plant database (species information)
-   * Image recognition (plant identification)
-   * Social sharing
-   * Calendar integration
+**✅ REUSE (no changes needed):**
+- Authentication middleware (`internal/middleware/auth.go`)
+- JWT verification (`internal/lib/jwt/`)
+- Error types (`internal/lib/errs/`)
+- Global middleware (CORS, logging, recovery)
+- Server configuration
+- Clerk integration
+- Database connection pooling
+- Migration system structure (just new migration files)
+- Validation package
+- Config management pattern (Koanf)
 
-4. **Security Enhancements**
+**🔄 ADAPT (update for Ark domain):**
+- Handlers (plant → asset, observation → log)
+- Services (business logic for assets/logs)
+- Repositories (data access for assets/logs)
+- Models (Asset, AssetLog instead of Plant, Observation)
+- Routes (update endpoints)
+- Frontend components (plants → assets, observations → logs)
+- API client (update endpoints)
+- TanStack Query hooks (update query keys)
 
-   * Rate limiting per user
-   * API key management
-   * Role-based access control (RBAC)
-   * Audit logging
-   * HTTPS enforcement in production
+**➕ ADD (new for Ark):**
+- LLM client (`internal/lib/llm/`)
+- AI service (`internal/service/ai_service.go`)
+- AI handler (`internal/handler/ai.go`)
+- AI DTOs (`internal/model/ai.go`)
+- AI frontend components (`components/ai/`)
+- Full-text search in log repository
+- OpenAI configuration
+- AI query endpoint and routes
 
+**❌ DELETE (no longer needed):**
+- Plant-related files (handlers, services, repos, models)
+- Observation-related files (handlers, services, repos, models)
+- Plant/observation routes
+- Plant/observation frontend components
+- Old test files for plants/observations
+- Background job processing (Redis) - not needed for MVP
+- Email templates - not needed for MVP
+- Resend integration - not needed for MVP
+
+---
+
+## Future Roadmap
+
+### V1 (Planned - 4-6 weeks)
+- **FTS Search:** Replace "recent logs" with keyword-based full-text search
+- **AI Enhancements:** Query history, copy answer, regenerate, suggested questions
+- **UI Polish:** Dark mode, markdown rendering, tag autocomplete, export
+- **Performance:** Redis caching, rate limiting, pagination controls
+
+### V2 (Future - 8-10 weeks)
+- **Vector Search:** Semantic search with OpenAI embeddings + pgvector
+- **Multi-Asset Queries:** Search across all assets ("show me all nginx fixes")
+- **Collaboration:** Team workspaces, shared assets, activity feeds
+- **Integrations:** Webhooks, Slack/Discord, API automation
+- **Analytics:** Usage dashboards, common issues, resolution tracking
+- **Mobile:** PWA, offline mode, quick log entry
+
+### V3+ (Future)
+- **Advanced AI:** Streaming responses, custom instructions, AI-suggested tags
+- **Automation:** Auto-tagging, pattern recognition, anomaly detection
+- **Extended Integrations:** Monitoring tools (Prometheus, Grafana), ticketing systems
+
+---
+
+## Security Notes
+
+- All queries scoped by `user_id` (multi-tenancy)
+- Asset ownership verified before AI queries
+- JWT validation on every request
+- CORS configured for allowed origins
+- Input validation (max lengths, required fields)
+- API keys never committed (use .env, add to .gitignore)
+- Rate limiting planned for V1
+
+---
+
+## Performance Considerations
+
+**Current (MVP):**
+- Recent 10 logs: <100ms query time
+- AI response: 5-15s typical (LLM latency)
+- No caching (comes in V1)
+
+**Optimizations (V1):**
+- Redis for response caching
+- FTS with ranked results
+- Connection pooling (pgxpool)
+- Query result pagination
+
+**Scaling (V2):**
+- Vector search with pgvector
+- Hybrid search (FTS + vector)
+- Background job processing for expensive queries

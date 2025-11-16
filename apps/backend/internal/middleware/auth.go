@@ -5,9 +5,9 @@ import (
 
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/labstack/echo/v4"
-	"github.com/srauf24/gardenjournal/internal/errs"
-	"github.com/srauf24/gardenjournal/internal/lib/jwt"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/errs"
+	"ark/internal/lib/jwt"
+	"ark/internal/server"
 )
 
 const (

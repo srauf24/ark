@@ -7,9 +7,9 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/srauf24/gardenjournal/internal/errs"
-	"github.com/srauf24/gardenjournal/internal/server"
-	"github.com/srauf24/gardenjournal/internal/sqlerr"
+	"ark/internal/errs"
+	"ark/internal/server"
+	"ark/internal/sqlerr"
 )
 
 type GlobalMiddlewares struct {

@@ -69,8 +69,8 @@ func LoadConfig() (*Config, error) {
 
 	k := koanf.New(".")
 
-	err := k.Load(env.Provider("GARDENJOURNAL_", ".", func(s string) string {
-		return strings.ToLower(strings.TrimPrefix(s, "GARDENJOURNAL_"))
+	err := k.Load(env.Provider("ARK_", ".", func(s string) string {
+		return strings.ToLower(strings.TrimPrefix(s, "ARK_"))
 	}), nil)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not load initial env variables")
@@ -96,7 +96,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Override service name and environment from primary config
-	mainConfig.Observability.ServiceName = "gardenjournal"
+	mainConfig.Observability.ServiceName = "ark"
 	mainConfig.Observability.Environment = mainConfig.Primary.Env
 
 	// Validate observability config

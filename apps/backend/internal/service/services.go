@@ -1,10 +1,10 @@
 package service
 
 import (
-	"github.com/srauf24/gardenjournal/internal/lib/job"
-	"github.com/srauf24/gardenjournal/internal/lib/weather"
-	"github.com/srauf24/gardenjournal/internal/repository"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/lib/job"
+	"ark/internal/lib/weather"
+	"ark/internal/repository"
+	"ark/internal/server"
 )
 
 // Services holds all service layer instances

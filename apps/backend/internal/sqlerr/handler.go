@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/srauf24/gardenjournal/internal/errs"
+	"ark/internal/errs"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"

@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/srauf24/gardenjournal/internal/handler"
+	"ark/internal/handler"
 
 	"github.com/labstack/echo/v4"
 )

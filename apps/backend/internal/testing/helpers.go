@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/server"
 	"github.com/stretchr/testify/require"
 )
 

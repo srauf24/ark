@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	"github.com/srauf24/gardenjournal/internal/model/observation"
-	"github.com/srauf24/gardenjournal/internal/server"
-	"github.com/srauf24/gardenjournal/internal/service"
+	"ark/internal/middleware"
+	"ark/internal/model/observation"
+	"ark/internal/server"
+	"ark/internal/service"
 )
 
 // ObservationHandler handles observation-related HTTP requests

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/srauf24/gardenjournal/internal/model"
+	"ark/internal/model"
 )
 
 // Observation represents a growth record for a plant.

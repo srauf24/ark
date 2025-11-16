@@ -35,7 +35,7 @@ type HealthChecksConfig struct {
 
 func DefaultObservabilityConfig() *ObservabilityConfig {
 	return &ObservabilityConfig{
-		ServiceName: "gardenjournal",
+		ServiceName: "ark",
 		Environment: "development",
 		Logging: LoggingConfig{
 			Level:              "info",

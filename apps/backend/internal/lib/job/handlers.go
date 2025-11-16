@@ -7,8 +7,8 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
-	"github.com/srauf24/gardenjournal/internal/config"
-	"github.com/srauf24/gardenjournal/internal/lib/email"
+	"ark/internal/config"
+	"ark/internal/lib/email"
 )
 
 var emailClient *email.Client

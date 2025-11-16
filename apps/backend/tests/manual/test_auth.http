@@ -187,14 +187,14 @@ Authorization: Bearer {{validJwt}}
 #    $ task run
 
 # 2. Environment variables are set (.env file)
-#    GARDENJOURNAL_AUTH.CLERK.SECRET_KEY="sk_test_..."
-#    GARDENJOURNAL_AUTH.CLERK.JWT_ISSUER="https://ace-dinosaur-39.clerk.accounts.dev"
+#    ARK_AUTH.CLERK.SECRET_KEY="sk_test_..."
+#    ARK_AUTH.CLERK.JWT_ISSUER="https://ace-dinosaur-39.clerk.accounts.dev"
 
 # 3. Database is running and accessible
-#    $ psql -U srauf -d gardenjournal -c "SELECT 1"
+#    $ psql -U srauf -d ark -c "SELECT 1"
 
 # 4. Database permissions are correct
-#    $ psql -U sameerauf -d gardenjournal -c "\dp plants"
+#    $ psql -U sameerauf -d ark -c "\dp plants"
 
 # 5. JWT token is fresh (not expired)
 #    - Decode token at https://jwt.io

@@ -8,11 +8,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
-	"github.com/srauf24/gardenjournal/internal/config"
-	"github.com/srauf24/gardenjournal/internal/handler"
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	v1 "github.com/srauf24/gardenjournal/internal/router/v1"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/config"
+	"ark/internal/handler"
+	"ark/internal/middleware"
+	v1 "ark/internal/router/v1"
+	"ark/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

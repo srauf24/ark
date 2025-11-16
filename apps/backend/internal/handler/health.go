@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/middleware"
+	"ark/internal/server"
 
 	"github.com/labstack/echo/v4"
 )
