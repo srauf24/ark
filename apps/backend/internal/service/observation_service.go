@@ -5,11 +5,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/srauf24/gardenjournal/internal/lib/weather"
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	"github.com/srauf24/gardenjournal/internal/model"
-	"github.com/srauf24/gardenjournal/internal/model/observation"
-	"github.com/srauf24/gardenjournal/internal/repository"
+	"ark/internal/lib/weather"
+	"ark/internal/middleware"
+	"ark/internal/model"
+	"ark/internal/model/observation"
+	"ark/internal/repository"
 )
 
 // ObservationService handles business logic for observation operations

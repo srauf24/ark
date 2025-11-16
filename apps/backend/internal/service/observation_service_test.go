@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/srauf24/gardenjournal/internal/model/observation"
+	"ark/internal/model/observation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

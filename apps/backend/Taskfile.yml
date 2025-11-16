@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  GARDENJOURNAL_DB_DSN: '{{.GARDENJOURNAL_DB_DSN | default ""}}'
+  ARK_DB_DSN: '{{.ARK_DB_DSN | default ""}}'
 
 tasks:
   help:
@@ -19,9 +19,9 @@ tasks:
     internal: true
 
   run:
-    desc: run the cmd/gardenjournal application
+    desc: run the cmd/ark application
     cmds:
-    - go run ./cmd/gardenjournal
+    - go run ./cmd/ark
 
   migrations:new:
     desc: create a new database migration
@@ -41,8 +41,8 @@ tasks:
     desc: apply all up database migrations
     deps: [ confirm ]
     cmds:
-    - echo 'Connecting with DSN {{.GARDENJOURNAL_DB_DSN}}'
-    - tern migrate -m ./internal/database/migrations --conn-string {{.GARDENJOURNAL_DB_DSN}}
+    - echo 'Connecting with DSN {{.ARK_DB_DSN}}'
+    - tern migrate -m ./internal/database/migrations --conn-string {{.ARK_DB_DSN}}
 
   tidy:
     desc: format all .go files, and tidy and vendor module dependencies

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/server"
 )
 
 type RateLimitMiddleware struct {

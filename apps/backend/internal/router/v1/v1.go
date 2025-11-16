@@ -2,8 +2,8 @@ package v1
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/srauf24/gardenjournal/internal/handler"
-	"github.com/srauf24/gardenjournal/internal/middleware"
+	"ark/internal/handler"
+	"ark/internal/middleware"
 )
 
 // RegisterRoutes registers all v1 API routes

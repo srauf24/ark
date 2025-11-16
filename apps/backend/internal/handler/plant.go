@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	"github.com/srauf24/gardenjournal/internal/model/plant"
-	"github.com/srauf24/gardenjournal/internal/server"
-	"github.com/srauf24/gardenjournal/internal/service"
+	"ark/internal/middleware"
+	"ark/internal/model/plant"
+	"ark/internal/server"
+	"ark/internal/service"
 )
 
 // PlantHandler handles plant-related HTTP requests

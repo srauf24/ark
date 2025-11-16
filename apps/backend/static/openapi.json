@@ -1803,8 +1803,8 @@
   },
   "info": {
     "version": "1.0.0",
-    "title": "gardenjournal REST API - Documentation",
-    "description": "gardenjournal REST API - Documentation"
+    "title": "ark REST API - Documentation",
+    "description": "ark REST API - Documentation"
   },
   "servers": [
     {

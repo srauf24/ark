@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/srauf24/gardenjournal/internal/model"
-	"github.com/srauf24/gardenjournal/internal/model/observation"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/model"
+	"ark/internal/model/observation"
+	"ark/internal/server"
 )
 
 type ObservationRepository struct {

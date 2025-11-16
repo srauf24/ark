@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/srauf24/gardenjournal/internal/server"
-	"github.com/srauf24/gardenjournal/internal/service"
+	"ark/internal/server"
+	"ark/internal/service"
 )
 
 type Handlers struct {

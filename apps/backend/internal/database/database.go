@@ -14,8 +14,8 @@ import (
 	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/newrelic/go-agent/v3/integrations/nrpgx5"
 	"github.com/rs/zerolog"
-	"github.com/srauf24/gardenjournal/internal/config"
-	loggerConfig "github.com/srauf24/gardenjournal/internal/logger"
+	"ark/internal/config"
+	loggerConfig "ark/internal/logger"
 )
 
 type Database struct {

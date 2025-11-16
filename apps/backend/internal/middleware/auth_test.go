@@ -9,9 +9,9 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
-	"github.com/srauf24/gardenjournal/internal/config"
-	"github.com/srauf24/gardenjournal/internal/errs"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/config"
+	"ark/internal/errs"
+	"ark/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -102,11 +102,11 @@ func TestClerkAuthMiddleware_InvalidTokenFormat(t *testing.T) {
 
 func TestClerkAuthMiddleware_TokenVerificationFails(t *testing.T) {
 	// Skip if no Clerk secret key is set
-	if os.Getenv("GARDENJOURNAL_AUTH.CLERK.SECRET_KEY") == "" {
-		t.Skip("Skipping test: GARDENJOURNAL_AUTH.CLERK.SECRET_KEY not set")
+	if os.Getenv("ARK_AUTH.CLERK.SECRET_KEY") == "" {
+		t.Skip("Skipping test: ARK_AUTH.CLERK.SECRET_KEY not set")
 	}
 
-	clerk.SetKey(os.Getenv("GARDENJOURNAL_AUTH.CLERK.SECRET_KEY"))
+	clerk.SetKey(os.Getenv("ARK_AUTH.CLERK.SECRET_KEY"))
 
 	testServer := createTestServer()
 	authMiddleware := NewAuthMiddleware(testServer)

@@ -1,4 +1,4 @@
-module github.com/srauf24/gardenjournal
+module ark
 
 go 1.24.5
 

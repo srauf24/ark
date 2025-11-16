@@ -3,8 +3,8 @@ package service
 import (
 	"testing"
 
-	"github.com/srauf24/gardenjournal/internal/repository"
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/repository"
+	"ark/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

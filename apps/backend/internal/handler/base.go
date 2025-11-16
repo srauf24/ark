@@ -6,9 +6,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/integrations/nrpkgerrors"
 	"github.com/newrelic/go-agent/v3/newrelic"
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	"github.com/srauf24/gardenjournal/internal/server"
-	"github.com/srauf24/gardenjournal/internal/validation"
+	"ark/internal/middleware"
+	"ark/internal/server"
+	"ark/internal/validation"
 )
 
 // Handler provides base functionality for all handlers

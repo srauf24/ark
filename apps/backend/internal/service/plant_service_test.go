@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/srauf24/gardenjournal/internal/model/plant"
+	"ark/internal/model/plant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

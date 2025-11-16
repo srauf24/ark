@@ -119,12 +119,12 @@ func TestVerifyClerkToken_InvalidTokenFormat(t *testing.T) {
 
 func TestVerifyClerkToken_MalformedToken(t *testing.T) {
 	// Skip if no Clerk secret key is set (this test requires Clerk SDK to be initialized)
-	if os.Getenv("GARDENJOURNAL_AUTH.CLERK.SECRET_KEY") == "" {
-		t.Skip("Skipping test: GARDENJOURNAL_AUTH.CLERK.SECRET_KEY not set")
+	if os.Getenv("ARK_AUTH.CLERK.SECRET_KEY") == "" {
+		t.Skip("Skipping test: ARK_AUTH.CLERK.SECRET_KEY not set")
 	}
 
 	// Set Clerk secret key for testing
-	clerk.SetKey(os.Getenv("GARDENJOURNAL_AUTH.CLERK.SECRET_KEY"))
+	clerk.SetKey(os.Getenv("ARK_AUTH.CLERK.SECRET_KEY"))
 
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	ctx := context.Background()

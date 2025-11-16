@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/srauf24/gardenjournal/internal/server"
+	"ark/internal/server"
 
 	"github.com/labstack/echo/v4"
 )

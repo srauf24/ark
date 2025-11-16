@@ -5,11 +5,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
-	"github.com/srauf24/gardenjournal/internal/handler"
-	"github.com/srauf24/gardenjournal/internal/middleware"
-	v1 "github.com/srauf24/gardenjournal/internal/router/v1"
-	"github.com/srauf24/gardenjournal/internal/server"
-	"github.com/srauf24/gardenjournal/internal/service"
+	"ark/internal/handler"
+	"ark/internal/middleware"
+	v1 "ark/internal/router/v1"
+	"ark/internal/server"
+	"ark/internal/service"
 	"golang.org/x/time/rate"
 )
 

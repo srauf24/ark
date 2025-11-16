@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/srauf24/gardenjournal/internal/model"
-	"github.com/srauf24/gardenjournal/internal/model/observation"
+	"ark/internal/model"
+	"ark/internal/model/observation"
 )
 
 // Represents the row in the database and what we return as JSON to the client

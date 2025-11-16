@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/srauf24/gardenjournal/internal/server"
+import "ark/internal/server"
 
 type Repositories struct {
 	Plant       *PlantRepository
