@@ -36,6 +36,12 @@ CREATE INDEX idx_assets_name_trgm ON assets USING GIN (name gin_trgm_ops);
 -- Create partial index on type for filtering
 CREATE INDEX idx_assets_type ON assets(type) WHERE type IS NOT NULL;
 
+-- Create trigger to auto-update updated_at on assets table
+CREATE TRIGGER set_assets_timestamp
+  BEFORE UPDATE ON assets
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_set_timestamp();
+
 ---- tern migration down
 
 -- TODO: Rollback content will be added in subsequent steps
