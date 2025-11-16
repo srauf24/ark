@@ -42,6 +42,18 @@ CREATE TRIGGER set_assets_timestamp
   FOR EACH ROW
   EXECUTE FUNCTION trigger_set_timestamp();
 
+-- Create asset_logs table
+CREATE TABLE asset_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  asset_id UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  tags TEXT[],
+  content_vector TSVECTOR GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 ---- tern migration down
 
 -- TODO: Rollback content will be added in subsequent steps
