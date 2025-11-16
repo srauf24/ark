@@ -1,4 +1,4 @@
-# Go gardenjournal
+# Go Arc
 
 A production-ready monorepo template for building scalable web applications with Go backend and TypeScript frontend. Built with modern best practices, clean architecture, and comprehensive tooling.
 
