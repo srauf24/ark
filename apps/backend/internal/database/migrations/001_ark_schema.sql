@@ -77,4 +77,18 @@ CREATE TRIGGER set_asset_logs_timestamp
 
 ---- tern migration down
 
--- TODO: Rollback content will be added in subsequent steps
+-- Drop triggers
+DROP TRIGGER IF EXISTS set_asset_logs_timestamp ON asset_logs;
+DROP TRIGGER IF EXISTS set_assets_timestamp ON assets;
+
+-- Drop tables (CASCADE will drop all indexes and constraints)
+DROP TABLE IF EXISTS asset_logs CASCADE;
+DROP TABLE IF EXISTS assets CASCADE;
+
+-- Drop trigger function
+DROP FUNCTION IF EXISTS trigger_set_timestamp();
+
+-- Drop extensions
+-- Safe to drop since we're starting fresh with Ark (no other apps using these)
+DROP EXTENSION IF EXISTS "pg_trgm";
+DROP EXTENSION IF EXISTS "uuid-ossp";
