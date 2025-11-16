@@ -27,6 +27,15 @@ CREATE TABLE assets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Create index on user_id for security and multi-tenancy
+CREATE INDEX idx_assets_user_id ON assets(user_id);
+
+-- Create trigram index on name for fuzzy search
+CREATE INDEX idx_assets_name_trgm ON assets USING GIN (name gin_trgm_ops);
+
+-- Create partial index on type for filtering
+CREATE INDEX idx_assets_type ON assets(type) WHERE type IS NOT NULL;
+
 ---- tern migration down
 
 -- TODO: Rollback content will be added in subsequent steps
