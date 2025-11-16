@@ -469,10 +469,6 @@ psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public 
 - Plant/observation routes
 - Plant/observation frontend components
 - Old test files for plants/observations
-- Background job processing (Redis) - not needed for MVP
-- Email templates - not needed for MVP
-- Resend integration - not needed for MVP
-
 ---
 
 ## Future Roadmap
