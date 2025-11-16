@@ -15,6 +15,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create assets table
+CREATE TABLE assets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT,
+  hostname TEXT,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 ---- tern migration down
 
 -- TODO: Rollback content will be added in subsequent steps
