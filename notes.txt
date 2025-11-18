@@ -81,3 +81,354 @@ task tidy
 bun install
 bun dev - builds a couple of things
 bun clean
+
+---
+
+# ARK-2: Database Schema Migration Commands
+
+This section documents all commands used during the ARK-2 database schema migration implementation.
+
+## Database Setup
+
+### Create Database
+```bash
+# Create the ark database (requires superuser privileges)
+createdb -U sameerauf ark
+
+# Grant permissions to application user
+psql -U sameerauf -d ark -c "GRANT ALL PRIVILEGES ON SCHEMA public TO srauf;"
+```
+
+### Drop and Recreate Database (for fresh start)
+```bash
+# Drop existing database
+psql -U sameerauf -d postgres -c "DROP DATABASE IF EXISTS ark;"
+
+# Create new database
+psql -U sameerauf -d postgres -c "CREATE DATABASE ark;"
+
+# Grant permissions
+psql -U sameerauf -d ark -c "GRANT ALL PRIVILEGES ON SCHEMA public TO srauf;"
+```
+
+## Migration Management
+
+### Check Migration Status
+```bash
+# Using tern directly
+export ARK_DB_DSN="postgres://sameerauf@localhost:5432/ark?sslmode=disable"
+tern status -m ./internal/database/migrations --conn-string "$ARK_DB_DSN"
+
+# Check what version is applied
+psql -U sameerauf -d ark -c "SELECT * FROM schema_version;"
+```
+
+### Apply UP Migration
+```bash
+# Using task (recommended - includes confirmation prompt)
+export ARK_DB_DSN="postgres://sameerauf@localhost:5432/ark?sslmode=disable"
+echo "y" | task migrations:up
+
+# Using tern directly (no confirmation)
+export ARK_DB_DSN="postgres://sameerauf@localhost:5432/ark?sslmode=disable"
+tern migrate -m ./internal/database/migrations --conn-string "$ARK_DB_DSN"
+
+# Using psql to execute migration file directly (for testing)
+psql -U sameerauf -d ark -f internal/database/migrations/001_ark_schema.sql
+
+# Execute only UP section (avoid executing DOWN section)
+awk '/---- tern migration up/,/---- tern migration down/' internal/database/migrations/001_ark_schema.sql | grep -v "tern migration down" | psql -U sameerauf -d ark
+```
+
+### Apply DOWN Migration (Rollback)
+```bash
+# Using tern
+export ARK_DB_DSN="postgres://sameerauf@localhost:5432/ark?sslmode=disable"
+tern migrate --destination 0 -m ./internal/database/migrations --conn-string "$ARK_DB_DSN"
+
+# Manual execution (for testing)
+psql -U sameerauf -d ark << 'EOF'
+DROP TRIGGER IF EXISTS set_asset_logs_timestamp ON asset_logs;
+DROP TRIGGER IF EXISTS set_assets_timestamp ON assets;
+DROP TABLE IF EXISTS asset_logs CASCADE;
+DROP TABLE IF EXISTS assets CASCADE;
+DROP FUNCTION IF EXISTS trigger_set_timestamp();
+DROP EXTENSION IF EXISTS "pg_trgm";
+DROP EXTENSION IF EXISTS "uuid-ossp";
+EOF
+```
+
+### Reset Migration Tracking
+```bash
+# Delete version tracking (use with caution!)
+psql -U sameerauf -d ark -c "DELETE FROM schema_version;"
+
+# Initialize version tracking at 0
+psql -U sameerauf -d ark -c "INSERT INTO schema_version (version) VALUES (0);"
+```
+
+## Schema Inspection
+
+### List Database Objects
+```bash
+# List all tables
+psql -U sameerauf -d ark -c "\dt"
+
+# List all indexes
+psql -U sameerauf -d ark -c "\di"
+
+# List all indexes for specific tables
+psql -U sameerauf -d ark -c "\di assets*"
+psql -U sameerauf -d ark -c "\di asset_logs*"
+
+# List all extensions
+psql -U sameerauf -d ark -c "\dx"
+
+# List all functions
+psql -U sameerauf -d ark -c "\df"
+psql -U sameerauf -d ark -c "\df trigger_set_timestamp"
+```
+
+### Inspect Table Structure
+```bash
+# View table structure
+psql -U sameerauf -d ark -c "\d assets"
+psql -U sameerauf -d ark -c "\d asset_logs"
+
+# View detailed function definition
+psql -U sameerauf -d ark -c "\df+ trigger_set_timestamp"
+```
+
+### Query System Catalogs
+```bash
+# List all tables with owners
+psql -U sameerauf -d ark -c "SELECT tablename, tableowner FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;"
+
+# List all indexes with definitions
+psql -U sameerauf -d ark -c "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'assets' ORDER BY indexname;"
+psql -U sameerauf -d ark -c "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'asset_logs' ORDER BY indexname;"
+
+# List all triggers
+psql -U sameerauf -d ark -c "SELECT tgname, tgtype, tgenabled FROM pg_trigger WHERE tgrelid = 'assets'::regclass;"
+psql -U sameerauf -d ark -c "SELECT tgname, tgtype, tgenabled FROM pg_trigger WHERE tgrelid = 'asset_logs'::regclass;"
+
+# List triggers by name pattern
+psql -U sameerauf -d ark -c "SELECT tgname FROM pg_trigger WHERE tgname LIKE '%timestamp%';"
+
+# List foreign key constraints
+psql -U sameerauf -d ark -c "SELECT conname AS constraint_name, conrelid::regclass AS table_name, confrelid::regclass AS referenced_table, confdeltype AS on_delete_action FROM pg_constraint WHERE contype = 'f' AND conrelid IN ('assets'::regclass, 'asset_logs'::regclass);"
+
+# List generated columns
+psql -U sameerauf -d ark -c "SELECT table_name, column_name, is_generated, generation_expression FROM information_schema.columns WHERE table_name IN ('assets', 'asset_logs') AND is_generated = 'ALWAYS';"
+
+# List all columns for tables
+psql -U sameerauf -d ark -c "SELECT table_name, column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name IN ('assets', 'asset_logs') ORDER BY table_name, ordinal_position;"
+```
+
+## Testing and Validation
+
+### Run Validation Scripts
+```bash
+# Run schema validation script
+psql -U sameerauf -d ark -f tests/manual/migration_validation.sql
+
+# Run test data script
+psql -U sameerauf -d ark -f tests/manual/migration_test_data.sql
+
+# View specific parts of output
+psql -U sameerauf -d ark -f tests/manual/migration_validation.sql 2>&1 | head -80
+psql -U sameerauf -d ark -f tests/manual/migration_test_data.sql 2>&1 | tail -60
+```
+
+### Test Specific Features
+```bash
+# Test UUID generation
+psql -U sameerauf -d ark -c "SELECT gen_random_uuid();"
+
+# Test trigram similarity
+psql -U sameerauf -d ark -c "SELECT similarity('postgres', 'postgresql');"
+
+# Test full-text search
+psql -U sameerauf -d ark -c "SELECT content FROM asset_logs WHERE content_vector @@ to_tsquery('english', 'nginx');"
+
+# Test with EXPLAIN to see index usage
+psql -U sameerauf -d ark -c "EXPLAIN SELECT content FROM asset_logs WHERE content_vector @@ to_tsquery('nginx');"
+```
+
+### Insert Test Data
+```bash
+# Insert test asset
+psql -U srauf -d ark -c "INSERT INTO assets (user_id, name) VALUES ('test-user', 'Test Server') RETURNING id, created_at, updated_at;"
+
+# Insert test log with all fields
+psql -U srauf -d ark << 'EOF'
+INSERT INTO assets (user_id, name, type, hostname, metadata)
+VALUES (
+  'test-user',
+  'Production Server',
+  'server',
+  'prod.local',
+  '{"ip": "192.168.1.100", "cpu": "8 cores", "ram": "32GB"}'::jsonb
+)
+RETURNING *;
+EOF
+
+# Clean up test data
+psql -U srauf -d ark -c "DELETE FROM assets WHERE user_id LIKE 'test-%';"
+```
+
+### Test Triggers
+```bash
+# Test timestamp trigger
+psql -U srauf -d ark << 'EOF'
+INSERT INTO assets (user_id, name) VALUES ('trigger-test', 'Test Asset') RETURNING id, created_at, updated_at;
+SELECT pg_sleep(2);
+UPDATE assets SET name = 'Updated Asset' WHERE user_id = 'trigger-test' RETURNING created_at, updated_at;
+DELETE FROM assets WHERE user_id = 'trigger-test';
+EOF
+```
+
+### Test CASCADE DELETE
+```bash
+# Test foreign key cascade delete
+psql -U srauf -d ark << 'EOF'
+INSERT INTO assets (user_id, name) VALUES ('cascade-test', 'Test Asset') RETURNING id;
+INSERT INTO asset_logs (asset_id, user_id, content)
+SELECT id, 'cascade-test', 'Test log' FROM assets WHERE user_id = 'cascade-test';
+SELECT COUNT(*) FROM asset_logs WHERE user_id = 'cascade-test';
+DELETE FROM assets WHERE user_id = 'cascade-test';
+SELECT COUNT(*) FROM asset_logs WHERE user_id = 'cascade-test';
+EOF
+```
+
+## Git Operations
+
+### Commit Migration Changes
+```bash
+# Add and commit migration file
+git add internal/database/migrations/001_ark_schema.sql
+
+# Commit with detailed message
+git commit -m "$(cat <<'EOF'
+[ARK-2] Add complete database schema migration
+
+Description of changes...
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+
+# Push to remote
+git push origin data_migrations
+```
+
+### Check Git Status
+```bash
+# View current branch and status
+git status
+
+# View recent commits
+git log --oneline -5
+
+# View diff
+git diff
+```
+
+## Permissions Management
+
+### Grant Permissions
+```bash
+# Grant all table privileges to user
+psql -U sameerauf -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO srauf;"
+
+# Grant schema privileges
+psql -U sameerauf -d ark -c "GRANT ALL PRIVILEGES ON SCHEMA public TO srauf;"
+```
+
+### Check User Roles
+```bash
+# List all roles and their attributes
+psql -U sameerauf -d postgres -c "\du"
+```
+
+## Troubleshooting
+
+### Check for Locked Processes
+```bash
+# Find processes using port 8080
+lsof -ti:8080 | xargs kill -9
+```
+
+### Verify Extension Availability
+```bash
+# Check if extensions are available
+psql -U sameerauf -d ark -c "SELECT * FROM pg_available_extensions WHERE name IN ('uuid-ossp', 'pg_trgm');"
+```
+
+### Check Migration File Syntax
+```bash
+# Verify migration file has correct tern markers
+grep -c "tern migration" internal/database/migrations/001_ark_schema.sql
+
+# View migration file structure
+head -20 internal/database/migrations/001_ark_schema.sql
+tail -20 internal/database/migrations/001_ark_schema.sql
+```
+
+### Debug Index Usage
+```bash
+# Generate test data to trigger index usage
+psql -U srauf -d ark << 'EOF'
+INSERT INTO assets (user_id, name, type)
+SELECT 'user-1', 'Server ' || generate_series, 'server'
+FROM generate_series(1, 100);
+EOF
+
+# Check query plan
+psql -U srauf -d ark -c "EXPLAIN ANALYZE SELECT * FROM assets WHERE user_id = 'user-1';"
+```
+
+## Environment Variables
+
+### Set Database Connection String
+```bash
+# For superuser (can create extensions)
+export ARK_DB_DSN="postgres://sameerauf@localhost:5432/ark?sslmode=disable"
+
+# For application user (normal operations)
+export ARK_DB_DSN="postgres://srauf:PASSWORD@localhost:5432/ark?sslmode=disable"
+
+# Verify environment variable is set
+echo $ARK_DB_DSN
+```
+
+## Common Task Commands
+
+```bash
+# View all available tasks
+task --list-all
+
+# Run migrations (with confirmation)
+task migrations:up
+
+# Create new migration
+task migrations:new name=migration_name
+
+# Run application
+task run
+
+# Format and tidy code
+task tidy
+```
+
+## Notes
+
+- Always use the superuser (sameerauf) for operations that require elevated privileges (creating extensions, databases)
+- Use the application user (srauf) for normal operations and testing
+- The `task migrations:up` command includes a confirmation prompt for safety
+- Test scripts are reusable and can be run multiple times for validation
+- Always verify schema changes in a development environment before applying to production
+- The migration file (001_ark_schema.sql) contains both UP and DOWN sections - be careful when executing with psql
+- CASCADE DELETE will automatically delete all related records - test thoroughly before using in production
