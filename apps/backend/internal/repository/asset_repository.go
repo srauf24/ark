@@ -31,11 +31,16 @@ func (r *AssetRepository) GetByID(ctx context.Context, userID string, assetID uu
 	query := `
 		SELECT id, user_id, name, type, hostname, metadata, created_at, updated_at
 		FROM assets
-		WHERE id = $1 AND user_id = $2
+		WHERE id = @assetID AND user_id = @userID
 	`
 
+	args := pgx.NamedArgs{
+		"assetID": assetID,
+		"userID":  userID,
+	}
+
 	var asset model.Asset
-	err := r.db.QueryRow(ctx, query, assetID, userID).Scan(
+	err := r.db.QueryRow(ctx, query, args).Scan(
 		&asset.ID,
 		&asset.UserID,
 		&asset.Name,
@@ -57,20 +62,18 @@ func (r *AssetRepository) GetByID(ctx context.Context, userID string, assetID uu
 }
 
 // buildAssetWhereClause builds dynamic WHERE clause for List/Count with filters
-func buildAssetWhereClause(params *model.AssetQueryParams, args *[]any, paramNum *int) string {
-	clauses := []string{"user_id = $1"}
+func buildAssetWhereClause(params *model.AssetQueryParams, args pgx.NamedArgs) string {
+	clauses := []string{"user_id = @userID"}
 
 	if params.Type != nil {
-		clauses = append(clauses, fmt.Sprintf("type = $%d", *paramNum))
-		*args = append(*args, *params.Type)
-		*paramNum++
+		clauses = append(clauses, "type = @type")
+		args["type"] = *params.Type
 	}
 
 	if params.Search != nil {
 		searchPattern := "%" + *params.Search + "%"
-		clauses = append(clauses, fmt.Sprintf("(name ILIKE $%d OR hostname ILIKE $%d)", *paramNum, *paramNum+1))
-		*args = append(*args, searchPattern, searchPattern)
-		*paramNum += 2
+		clauses = append(clauses, "(name ILIKE @search OR hostname ILIKE @search)")
+		args["search"] = searchPattern
 	}
 
 	return "WHERE " + strings.Join(clauses, " AND ")
@@ -107,10 +110,13 @@ func (r *AssetRepository) List(ctx context.Context, userID string, params *model
 		return nil, err
 	}
 
-	// Build WHERE clause
-	args := []any{userID}
-	paramNum := 2
-	whereClause := buildAssetWhereClause(params, &args, &paramNum)
+	// Build WHERE clause with named args
+	args := pgx.NamedArgs{
+		"userID": userID,
+		"limit":  params.Limit,
+		"offset": params.Offset,
+	}
+	whereClause := buildAssetWhereClause(params, args)
 
 	// Build complete query with ORDER BY and LIMIT/OFFSET
 	query := fmt.Sprintf(`
@@ -118,12 +124,10 @@ func (r *AssetRepository) List(ctx context.Context, userID string, params *model
 		FROM assets
 		%s
 		ORDER BY %s %s
-		LIMIT $%d OFFSET $%d
-	`, whereClause, params.SortBy, params.SortOrder, paramNum, paramNum+1)
+		LIMIT @limit OFFSET @offset
+	`, whereClause, params.SortBy, params.SortOrder)
 
-	args = append(args, params.Limit, params.Offset)
-
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query, args)
 	if err != nil {
 		return nil, fmt.Errorf("list assets: %w", err)
 	}
@@ -158,9 +162,10 @@ func (r *AssetRepository) List(ctx context.Context, userID string, params *model
 // Count returns the total number of assets matching the filters
 func (r *AssetRepository) Count(ctx context.Context, userID string, params *model.AssetQueryParams) (int64, error) {
 	// Build WHERE clause (same logic as List)
-	args := []any{userID}
-	paramNum := 2
-	whereClause := buildAssetWhereClause(params, &args, &paramNum)
+	args := pgx.NamedArgs{
+		"userID": userID,
+	}
+	whereClause := buildAssetWhereClause(params, args)
 
 	query := fmt.Sprintf(`
 		SELECT COUNT(*)
@@ -169,7 +174,7 @@ func (r *AssetRepository) Count(ctx context.Context, userID string, params *mode
 	`, whereClause)
 
 	var count int64
-	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	err := r.db.QueryRow(ctx, query, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("count assets: %w", err)
 	}
@@ -181,18 +186,20 @@ func (r *AssetRepository) Count(ctx context.Context, userID string, params *mode
 func (r *AssetRepository) Create(ctx context.Context, userID string, req *model.CreateAssetRequest) (*model.Asset, error) {
 	query := `
 		INSERT INTO assets (user_id, name, type, hostname, metadata)
-		VALUES ($1, $2, $3, $4, $5)
+		VALUES (@userID, @name, @type, @hostname, @metadata)
 		RETURNING id, user_id, name, type, hostname, metadata, created_at, updated_at
 	`
 
+	args := pgx.NamedArgs{
+		"userID":   userID,
+		"name":     req.Name,
+		"type":     req.Type,     // nil becomes NULL
+		"hostname": req.Hostname, // nil becomes NULL
+		"metadata": req.Metadata, // nil becomes NULL
+	}
+
 	var asset model.Asset
-	err := r.db.QueryRow(ctx, query,
-		userID,
-		req.Name,
-		req.Type,     // nil becomes NULL
-		req.Hostname, // nil becomes NULL
-		req.Metadata, // nil becomes NULL
-	).Scan(
+	err := r.db.QueryRow(ctx, query, args).Scan(
 		&asset.ID,
 		&asset.UserID,
 		&asset.Name,
@@ -211,31 +218,27 @@ func (r *AssetRepository) Create(ctx context.Context, userID string, req *model.
 }
 
 // buildAssetUpdateSetClause builds dynamic SET clause for Update
-func buildAssetUpdateSetClause(req *model.UpdateAssetRequest, args *[]any, paramNum *int) string {
+func buildAssetUpdateSetClause(req *model.UpdateAssetRequest, args pgx.NamedArgs) string {
 	setClauses := []string{"updated_at = now()"}
 
 	if req.Name != nil {
-		setClauses = append(setClauses, fmt.Sprintf("name = $%d", *paramNum))
-		*args = append(*args, *req.Name)
-		*paramNum++
+		setClauses = append(setClauses, "name = @name")
+		args["name"] = *req.Name
 	}
 
 	if req.Type != nil {
-		setClauses = append(setClauses, fmt.Sprintf("type = $%d", *paramNum))
-		*args = append(*args, *req.Type)
-		*paramNum++
+		setClauses = append(setClauses, "type = @type")
+		args["type"] = *req.Type
 	}
 
 	if req.Hostname != nil {
-		setClauses = append(setClauses, fmt.Sprintf("hostname = $%d", *paramNum))
-		*args = append(*args, *req.Hostname)
-		*paramNum++
+		setClauses = append(setClauses, "hostname = @hostname")
+		args["hostname"] = *req.Hostname
 	}
 
 	if req.Metadata != nil {
-		setClauses = append(setClauses, fmt.Sprintf("metadata = $%d", *paramNum))
-		*args = append(*args, *req.Metadata)
-		*paramNum++
+		setClauses = append(setClauses, "metadata = @metadata")
+		args["metadata"] = *req.Metadata
 	}
 
 	return strings.Join(setClauses, ", ")
@@ -244,19 +247,21 @@ func buildAssetUpdateSetClause(req *model.UpdateAssetRequest, args *[]any, param
 // Update modifies an existing asset (only non-nil fields are updated)
 func (r *AssetRepository) Update(ctx context.Context, userID string, assetID uuid.UUID, req *model.UpdateAssetRequest) (*model.Asset, error) {
 	// Build SET clause dynamically based on non-nil fields
-	args := []any{assetID, userID}
-	paramNum := 3
-	setClause := buildAssetUpdateSetClause(req, &args, &paramNum)
+	args := pgx.NamedArgs{
+		"assetID": assetID,
+		"userID":  userID,
+	}
+	setClause := buildAssetUpdateSetClause(req, args)
 
 	query := fmt.Sprintf(`
 		UPDATE assets
 		SET %s
-		WHERE id = $1 AND user_id = $2
+		WHERE id = @assetID AND user_id = @userID
 		RETURNING id, user_id, name, type, hostname, metadata, created_at, updated_at
 	`, setClause)
 
 	var asset model.Asset
-	err := r.db.QueryRow(ctx, query, args...).Scan(
+	err := r.db.QueryRow(ctx, query, args).Scan(
 		&asset.ID,
 		&asset.UserID,
 		&asset.Name,
@@ -281,10 +286,15 @@ func (r *AssetRepository) Update(ctx context.Context, userID string, assetID uui
 func (r *AssetRepository) Delete(ctx context.Context, userID string, assetID uuid.UUID) error {
 	query := `
 		DELETE FROM assets
-		WHERE id = $1 AND user_id = $2
+		WHERE id = @assetID AND user_id = @userID
 	`
 
-	result, err := r.db.Exec(ctx, query, assetID, userID)
+	args := pgx.NamedArgs{
+		"assetID": assetID,
+		"userID":  userID,
+	}
+
+	result, err := r.db.Exec(ctx, query, args)
 	if err != nil {
 		return fmt.Errorf("delete asset: %w", err)
 	}
