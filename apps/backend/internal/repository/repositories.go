@@ -3,13 +3,9 @@ package repository
 import "ark/internal/server"
 
 type Repositories struct {
-	Plant       *PlantRepository
-	Observation *ObservationRepository
+	// TODO: Add Asset and Log repositories when implemented
 }
 
 func NewRepositories(s *server.Server) *Repositories {
-	return &Repositories{
-		Plant:       NewPlantRepository(s),
-		Observation: NewObservationRepository(s),
-	}
+	return &Repositories{}
 }

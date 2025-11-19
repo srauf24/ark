@@ -2,17 +2,15 @@ package service
 
 import (
 	"ark/internal/lib/job"
-	"ark/internal/lib/weather"
 	"ark/internal/repository"
 	"ark/internal/server"
 )
 
 // Services holds all service layer instances
 type Services struct {
-	Auth        *AuthService
-	Job         *job.JobService
-	Plant       *PlantService
-	Observation *ObservationService
+	Auth *AuthService
+	Job  *job.JobService
+	// TODO: Add Asset and Log services when implemented
 }
 
 // NewServices creates and initializes all services with their dependencies
@@ -20,21 +18,8 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 	// Initialize core services
 	authService := NewAuthService(s)
 
-	// Create weather client for observation enrichment (future use)
-	weatherClient := weather.NewClient()
-
-	// Create domain services with repository dependencies
-	plantService := NewPlantService(repos.Plant)
-	observationService := NewObservationService(
-		repos.Observation,
-		repos.Plant,
-		weatherClient,
-	)
-
 	return &Services{
-		Job:         s.Job,
-		Auth:        authService,
-		Plant:       plantService,
-		Observation: observationService,
+		Job:  s.Job,
+		Auth: authService,
 	}, nil
 }

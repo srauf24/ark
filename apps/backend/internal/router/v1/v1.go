@@ -16,6 +16,5 @@ func RegisterRoutes(router *echo.Echo, h *handler.Handlers, m *middleware.Middle
 
 	// Register resource routes
 	// Each protected route will use RequireAuth (Phase 2) to extract claims
-	registerPlantRoutes(v1, h, m.Auth)
-	registerObservationRoutes(v1, h, m.Auth)
+	// TODO: Register asset and log routes when handlers are implemented
 }

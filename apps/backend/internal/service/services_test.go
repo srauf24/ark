@@ -32,10 +32,9 @@ func TestServices_StructureValidation(t *testing.T) {
 	// Test that Services struct has all required fields
 	t.Run("Services struct has all required fields", func(t *testing.T) {
 		services := &Services{
-			Auth:        nil, // Will be *AuthService
-			Job:         nil, // Will be *job.JobService
-			Plant:       nil, // Will be *PlantService
-			Observation: nil, // Will be *ObservationService
+			Auth: nil, // Will be *AuthService
+			Job:  nil, // Will be *job.JobService
+			// TODO: Add Asset and Log services when implemented
 		}
 
 		require.NotNil(t, services, "Services struct should be instantiable")
@@ -44,8 +43,6 @@ func TestServices_StructureValidation(t *testing.T) {
 		assert.NotPanics(t, func() {
 			_ = services.Auth
 			_ = services.Job
-			_ = services.Plant
-			_ = services.Observation
 		}, "All service fields should be accessible")
 	})
 }
@@ -67,16 +64,7 @@ func TestServices_DependencyInjection(t *testing.T) {
 			serviceName:  "Job",
 			dependencies: []string{"server.Job"},
 		},
-		{
-			name:         "PlantService dependencies",
-			serviceName:  "Plant",
-			dependencies: []string{"PlantRepository"},
-		},
-		{
-			name:         "ObservationService dependencies",
-			serviceName:  "Observation",
-			dependencies: []string{"ObservationRepository", "PlantRepository", "WeatherClient"},
-		},
+		// TODO: Add Asset and Log service dependency tests when implemented
 	}
 
 	for _, tc := range testCases {
@@ -95,13 +83,11 @@ func TestServices_NoDependencyCycles(t *testing.T) {
 	t.Run("Dependency graph is acyclic", func(t *testing.T) {
 		// Document the dependency graph
 		dependencyGraph := map[string][]string{
-			"AuthService":           {"Server"},
-			"JobService":            {"Server"},
-			"PlantService":          {"PlantRepository"},
-			"ObservationService":    {"ObservationRepository", "PlantRepository", "WeatherClient"},
-			"PlantRepository":       {"Server"},
-			"ObservationRepository": {"Server"},
-			"WeatherClient":         {}, // No dependencies
+			"AuthService": {"Server"},
+			"JobService":  {"Server"},
+			// TODO: Add Asset and Log service dependencies when implemented
+			// "AssetService": {"AssetRepository"},
+			// "LogService":   {"LogRepository", "AssetRepository"},
 		}
 
 		// For MVP, we document the dependency graph
@@ -115,11 +101,6 @@ func TestServices_NoDependencyCycles(t *testing.T) {
 		// 2. Services don't depend on handlers
 		// 3. No service depends on Services struct itself
 
-		assert.NotContains(t, dependencyGraph["PlantRepository"], "PlantService",
-			"Repositories should not depend on services")
-		assert.NotContains(t, dependencyGraph["ObservationRepository"], "ObservationService",
-			"Repositories should not depend on services")
-
 		t.Log("Dependency graph validated: no circular dependencies detected")
 	})
 }
@@ -130,9 +111,9 @@ func TestServices_InitializationOrder(t *testing.T) {
 		// Document the initialization order
 		initOrder := []string{
 			"1. AuthService (core service)",
-			"2. WeatherClient (utility)",
-			"3. PlantService (domain service)",
-			"4. ObservationService (domain service, depends on PlantService via PlantRepository)",
+			// TODO: Add Asset and Log services when implemented
+			// "2. AssetService (domain service)",
+			// "3. LogService (domain service, depends on AssetService via AssetRepository)",
 		}
 
 		for _, step := range initOrder {
@@ -145,41 +126,9 @@ func TestServices_InitializationOrder(t *testing.T) {
 }
 
 func TestServices_ServiceInterfaces(t *testing.T) {
+	t.Skip("Skipping until Asset and Log services are implemented")
 	// Test that services expose the expected methods
-	testCases := []struct {
-		serviceName string
-		methods     []string
-	}{
-		{
-			serviceName: "PlantService",
-			methods: []string{
-				"CreatePlant",
-				"GetPlantByID",
-				"GetPlants",
-				"UpdatePlant",
-				"DeletePlant",
-			},
-		},
-		{
-			serviceName: "ObservationService",
-			methods: []string{
-				"CreateObservation",
-				"GetObservationByID",
-				"GetObservations",
-				"UpdateObservation",
-				"DeleteObservation",
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.serviceName, func(t *testing.T) {
-			// Document expected service methods
-			assert.NotEmpty(t, tc.methods, "Service methods should be defined")
-
-			t.Logf("Service %s exposes methods: %v", tc.serviceName, tc.methods)
-		})
-	}
+	// TODO: Add Asset and Log service interface tests when implemented
 }
 
 func TestServices_ErrorHandling(t *testing.T) {
@@ -220,7 +169,7 @@ func TestServices_LayerSeparation(t *testing.T) {
 				"No direct repository access",
 			},
 			"Service Layer": {
-				"Depends on: Repositories, External clients (weather)",
+				"Depends on: Repositories",
 				"Business logic and validation",
 				"No direct database access",
 			},
@@ -249,7 +198,6 @@ func TestServices_ScalabilityConsiderations(t *testing.T) {
 			"Services are stateless (except injected dependencies)",
 			"Services can be safely shared across goroutines",
 			"Repository connections are pooled at the Server level",
-			"Weather client has built-in timeout and retry logic",
 			"No global state or singletons (except injected dependencies)",
 		}
 
