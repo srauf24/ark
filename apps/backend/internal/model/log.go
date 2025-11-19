@@ -81,3 +81,34 @@ func NewLogListResponse(logs []*AssetLog, total int64, limit, offset int) *LogLi
 		Offset: offset,
 	}
 }
+
+// LogQueryParams represents query parameters for listing logs
+type LogQueryParams struct {
+	Limit     int        `query:"limit" validate:"omitempty,min=1,max=200"`
+	Offset    int        `query:"offset" validate:"omitempty,min=0"`
+	Tags      []string   `query:"tags" validate:"omitempty,dive,max=50"`
+	Search    *string    `query:"search" validate:"omitempty,max=100"`
+	StartDate *time.Time `query:"start_date"`
+	EndDate   *time.Time `query:"end_date"`
+	SortBy    string     `query:"sort_by" validate:"omitempty,oneof=created_at updated_at"`
+	SortOrder string     `query:"sort_order" validate:"omitempty,oneof=asc desc"`
+}
+
+// SetDefaults sets default values for LogQueryParams
+func (q *LogQueryParams) SetDefaults() {
+	if q.Limit == 0 {
+		q.Limit = DefaultLogLimit
+	}
+	if q.Limit > MaxLogLimit {
+		q.Limit = MaxLogLimit
+	}
+	if q.Offset < 0 {
+		q.Offset = 0
+	}
+	if q.SortBy == "" {
+		q.SortBy = "created_at"
+	}
+	if q.SortOrder == "" {
+		q.SortOrder = "desc"
+	}
+}

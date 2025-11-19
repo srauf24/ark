@@ -1040,3 +1040,264 @@ func TestNewLogListResponse_PreservesTags(t *testing.T) {
 		t.Error("Expected second log to have nil or empty tags")
 	}
 }
+
+// ========== LogQueryParams Tests ==========
+
+// Test 42: TestLogQueryParams_SetDefaults_ZeroLimit
+func TestLogQueryParams_SetDefaults_ZeroLimit(t *testing.T) {
+	params := LogQueryParams{Limit: 0}
+	params.SetDefaults()
+
+	if params.Limit != DefaultLogLimit {
+		t.Errorf("Expected Limit to be %d, got %d", DefaultLogLimit, params.Limit)
+	}
+}
+
+// Test 43: TestLogQueryParams_SetDefaults_ExcessiveLimit
+func TestLogQueryParams_SetDefaults_ExcessiveLimit(t *testing.T) {
+	params := LogQueryParams{Limit: 300}
+	params.SetDefaults()
+
+	if params.Limit != MaxLogLimit {
+		t.Errorf("Expected Limit to be capped at %d, got %d", MaxLogLimit, params.Limit)
+	}
+}
+
+// Test 44: TestLogQueryParams_SetDefaults_ValidLimit
+func TestLogQueryParams_SetDefaults_ValidLimit(t *testing.T) {
+	params := LogQueryParams{Limit: 100}
+	params.SetDefaults()
+
+	if params.Limit != 100 {
+		t.Errorf("Expected Limit to remain 100, got %d", params.Limit)
+	}
+}
+
+// Test 45: TestLogQueryParams_SetDefaults_NegativeOffset
+func TestLogQueryParams_SetDefaults_NegativeOffset(t *testing.T) {
+	params := LogQueryParams{Offset: -5}
+	params.SetDefaults()
+
+	if params.Offset != 0 {
+		t.Errorf("Expected Offset to be set to 0, got %d", params.Offset)
+	}
+}
+
+// Test 46: TestLogQueryParams_SetDefaults_EmptySortBy
+func TestLogQueryParams_SetDefaults_EmptySortBy(t *testing.T) {
+	params := LogQueryParams{SortBy: ""}
+	params.SetDefaults()
+
+	if params.SortBy != "created_at" {
+		t.Errorf("Expected SortBy to default to 'created_at', got '%s'", params.SortBy)
+	}
+}
+
+// Test 47: TestLogQueryParams_SetDefaults_EmptySortOrder
+func TestLogQueryParams_SetDefaults_EmptySortOrder(t *testing.T) {
+	params := LogQueryParams{SortOrder: ""}
+	params.SetDefaults()
+
+	if params.SortOrder != "desc" {
+		t.Errorf("Expected SortOrder to default to 'desc', got '%s'", params.SortOrder)
+	}
+}
+
+// Test 48: TestLogQueryParams_SetDefaults_AllDefaults
+func TestLogQueryParams_SetDefaults_AllDefaults(t *testing.T) {
+	params := LogQueryParams{}
+	params.SetDefaults()
+
+	if params.Limit != DefaultLogLimit {
+		t.Errorf("Expected Limit=%d, got %d", DefaultLogLimit, params.Limit)
+	}
+	if params.Offset != 0 {
+		t.Errorf("Expected Offset=0, got %d", params.Offset)
+	}
+	if params.SortBy != "created_at" {
+		t.Errorf("Expected SortBy='created_at', got '%s'", params.SortBy)
+	}
+	if params.SortOrder != "desc" {
+		t.Errorf("Expected SortOrder='desc', got '%s'", params.SortOrder)
+	}
+}
+
+// Test 49: TestLogQueryParams_Validation_InvalidSortBy
+func TestLogQueryParams_Validation_InvalidSortBy(t *testing.T) {
+	validate := validator.New()
+	params := LogQueryParams{
+		Limit:     50,
+		SortBy:    "content", // Not in oneof list
+		SortOrder: "asc",
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for invalid SortBy value")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "SortBy" && fieldError.Tag() == "oneof" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on SortBy field with 'oneof' tag")
+		}
+	}
+}
+
+// Test 50: TestLogQueryParams_Validation_InvalidSortOrder
+func TestLogQueryParams_Validation_InvalidSortOrder(t *testing.T) {
+	validate := validator.New()
+	params := LogQueryParams{
+		Limit:     50,
+		SortBy:    "created_at",
+		SortOrder: "random",
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for invalid SortOrder value")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "SortOrder" && fieldError.Tag() == "oneof" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on SortOrder field with 'oneof' tag")
+		}
+	}
+}
+
+// Test 51: TestLogQueryParams_Validation_SearchTooLong
+func TestLogQueryParams_Validation_SearchTooLong(t *testing.T) {
+	validate := validator.New()
+	longSearch := strings.Repeat("a", 101)
+	params := LogQueryParams{
+		Limit:  50,
+		Search: &longSearch,
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for Search > 100 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Search" && fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Search field with 'max' tag")
+		}
+	}
+}
+
+// Test 52: TestLogQueryParams_Validation_TagTooLong
+func TestLogQueryParams_Validation_TagTooLong(t *testing.T) {
+	validate := validator.New()
+	longTag := strings.Repeat("a", 51)
+	params := LogQueryParams{
+		Limit: 50,
+		Tags:  []string{longTag},
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for tag > 50 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error with 'max' tag for tag length")
+		}
+	}
+}
+
+// Test 53: TestLogQueryParams_Validation_MultipleTags
+func TestLogQueryParams_Validation_MultipleTags(t *testing.T) {
+	validate := validator.New()
+	params := LogQueryParams{
+		Limit: 50,
+		Tags:  []string{"tag1", "tag2", "tag3"},
+	}
+
+	err := validate.Struct(params)
+	if err != nil {
+		t.Errorf("Expected validation to pass for multiple valid tags, got error: %v", err)
+	}
+}
+
+// Test 54: TestLogQueryParams_Validation_ValidDates
+func TestLogQueryParams_Validation_ValidDates(t *testing.T) {
+	validate := validator.New()
+	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC)
+	params := LogQueryParams{
+		Limit:     50,
+		StartDate: &startDate,
+		EndDate:   &endDate,
+	}
+
+	err := validate.Struct(params)
+	if err != nil {
+		t.Errorf("Expected validation to pass for valid dates, got error: %v", err)
+	}
+}
+
+// Test 55: TestLogQueryParams_Validation_NilDates
+func TestLogQueryParams_Validation_NilDates(t *testing.T) {
+	validate := validator.New()
+	params := LogQueryParams{
+		Limit:     50,
+		StartDate: nil,
+		EndDate:   nil,
+	}
+
+	err := validate.Struct(params)
+	if err != nil {
+		t.Errorf("Expected validation to pass for nil dates, got error: %v", err)
+	}
+}
+
+// Test 56: TestLogQueryParams_Validation_ValidParams
+func TestLogQueryParams_Validation_ValidParams(t *testing.T) {
+	validate := validator.New()
+	searchTerm := "nginx"
+	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	params := LogQueryParams{
+		Limit:     100,
+		Offset:    0,
+		Tags:      []string{"nginx", "fix"},
+		Search:    &searchTerm,
+		StartDate: &startDate,
+		SortBy:    "created_at",
+		SortOrder: "desc",
+	}
+
+	params.SetDefaults()
+	err := validate.Struct(params)
+	if err != nil {
+		t.Errorf("Expected validation to pass for valid params, got error: %v", err)
+	}
+}
