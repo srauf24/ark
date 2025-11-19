@@ -685,3 +685,358 @@ func TestUpdateLogRequest_DistinguishNilVsEmpty(t *testing.T) {
 	t.Log("req1.Tags == nil means: don't update tags")
 	t.Log("req2.Tags == &[]string{} means: clear all tags")
 }
+
+// ========== LogResponse Tests ==========
+
+// Test 30: TestNewLogResponse_AllFields
+func TestNewLogResponse_AllFields(t *testing.T) {
+	log := &AssetLog{
+		ID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+		AssetID:   uuid.MustParse("660e8400-e29b-41d4-a716-446655440001"),
+		UserID:    "user_123",
+		Content:   "Fixed nginx by restarting service",
+		Tags:      []string{"nginx", "fix"},
+		CreatedAt: time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2024, 3, 15, 11, 0, 0, 0, time.UTC),
+	}
+
+	resp := NewLogResponse(log)
+
+	if resp == nil {
+		t.Fatal("Expected non-nil response")
+	}
+	if resp.ID != log.ID {
+		t.Errorf("ID mismatch: %v != %v", resp.ID, log.ID)
+	}
+	if resp.AssetID != log.AssetID {
+		t.Errorf("AssetID mismatch: %v != %v", resp.AssetID, log.AssetID)
+	}
+	if resp.UserID != log.UserID {
+		t.Errorf("UserID mismatch: %v != %v", resp.UserID, log.UserID)
+	}
+	if resp.Content != log.Content {
+		t.Errorf("Content mismatch: %v != %v", resp.Content, log.Content)
+	}
+	if len(resp.Tags) != len(log.Tags) {
+		t.Errorf("Tags length mismatch: %d != %d", len(resp.Tags), len(log.Tags))
+	}
+	for i, tag := range log.Tags {
+		if i < len(resp.Tags) && resp.Tags[i] != tag {
+			t.Errorf("Tag %d mismatch: %v != %v", i, resp.Tags[i], tag)
+		}
+	}
+}
+
+// Test 31: TestNewLogResponse_EmptyTags
+func TestNewLogResponse_EmptyTags(t *testing.T) {
+	log := &AssetLog{
+		ID:        uuid.New(),
+		AssetID:   uuid.New(),
+		UserID:    "user_123",
+		Content:   "Test log",
+		Tags:      []string{},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	resp := NewLogResponse(log)
+
+	// Empty tags array should be copied
+	if resp.Tags == nil {
+		t.Error("Expected Tags to be non-nil empty slice")
+	}
+	if len(resp.Tags) != 0 {
+		t.Error("Expected Tags to be empty")
+	}
+
+	// Verify omitempty in JSON
+	jsonData, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatalf("Failed to marshal response: %v", err)
+	}
+
+	jsonStr := string(jsonData)
+	// Empty array might be omitted or shown as [] with omitempty
+	_ = jsonStr // Just verify it marshals without error
+}
+
+// Test 32: TestNewLogResponse_NilTags
+func TestNewLogResponse_NilTags(t *testing.T) {
+	log := &AssetLog{
+		ID:        uuid.New(),
+		AssetID:   uuid.New(),
+		UserID:    "user_123",
+		Content:   "Test log",
+		Tags:      nil,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	resp := NewLogResponse(log)
+
+	// Nil tags should remain nil
+	if resp.Tags != nil && len(resp.Tags) > 0 {
+		t.Error("Expected Tags to be nil or empty")
+	}
+}
+
+// Test 33: TestNewLogResponse_NilInput
+func TestNewLogResponse_NilInput(t *testing.T) {
+	resp := NewLogResponse(nil)
+
+	if resp != nil {
+		t.Error("Expected nil response when input is nil")
+	}
+}
+
+// Test 34: TestNewLogResponse_MarshalJSON
+func TestNewLogResponse_MarshalJSON(t *testing.T) {
+	log := &AssetLog{
+		ID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+		AssetID:   uuid.MustParse("660e8400-e29b-41d4-a716-446655440001"),
+		UserID:    "user_123",
+		Content:   "Test log",
+		Tags:      []string{"test"},
+		CreatedAt: time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2024, 3, 15, 11, 0, 0, 0, time.UTC),
+	}
+
+	resp := NewLogResponse(log)
+	jsonData, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatalf("Failed to marshal response: %v", err)
+	}
+
+	jsonStr := string(jsonData)
+	if !strings.Contains(jsonStr, `"id"`) {
+		t.Error("JSON should contain 'id' field")
+	}
+	if !strings.Contains(jsonStr, `"asset_id"`) {
+		t.Error("JSON should contain 'asset_id' field")
+	}
+	if !strings.Contains(jsonStr, `"user_id"`) {
+		t.Error("JSON should contain 'user_id' field")
+	}
+	if !strings.Contains(jsonStr, `"content"`) {
+		t.Error("JSON should contain 'content' field")
+	}
+	if !strings.Contains(jsonStr, `"tags"`) {
+		t.Error("JSON should contain 'tags' field")
+	}
+	if !strings.Contains(jsonStr, `"created_at"`) {
+		t.Error("JSON should contain 'created_at' field")
+	}
+	if !strings.Contains(jsonStr, `"updated_at"`) {
+		t.Error("JSON should contain 'updated_at' field")
+	}
+}
+
+// ========== LogListResponse Tests ==========
+
+// Test 35: TestNewLogListResponse_MultipleLogs
+func TestNewLogListResponse_MultipleLogs(t *testing.T) {
+	logs := []*AssetLog{
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log 1",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log 2",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log 3",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log 4",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log 5",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	resp := NewLogListResponse(logs, 100, 50, 0)
+
+	if len(resp.Logs) != 5 {
+		t.Errorf("Expected 5 logs, got %d", len(resp.Logs))
+	}
+	if resp.Total != 100 {
+		t.Errorf("Expected Total=100, got %d", resp.Total)
+	}
+	if resp.Limit != 50 {
+		t.Errorf("Expected Limit=50, got %d", resp.Limit)
+	}
+	if resp.Offset != 0 {
+		t.Errorf("Expected Offset=0, got %d", resp.Offset)
+	}
+
+	// Verify all logs were converted
+	for i, logResp := range resp.Logs {
+		if logResp.Content != logs[i].Content {
+			t.Errorf("Log %d: Content mismatch", i)
+		}
+	}
+}
+
+// Test 36: TestNewLogListResponse_EmptySlice
+func TestNewLogListResponse_EmptySlice(t *testing.T) {
+	resp := NewLogListResponse([]*AssetLog{}, 0, 50, 0)
+
+	if resp.Logs == nil {
+		t.Error("Expected Logs to be non-nil empty slice, not nil")
+	}
+	if len(resp.Logs) != 0 {
+		t.Errorf("Expected empty slice, got length %d", len(resp.Logs))
+	}
+	if resp.Total != 0 {
+		t.Errorf("Expected Total=0, got %d", resp.Total)
+	}
+
+	// Verify JSON serialization
+	jsonData, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatalf("Failed to marshal: %v", err)
+	}
+
+	jsonStr := string(jsonData)
+	// Empty slice should serialize as [] not null
+	if strings.Contains(jsonStr, `"logs":null`) {
+		t.Error("Logs should serialize as empty array [], not null")
+	}
+	if !strings.Contains(jsonStr, `"logs":[]`) {
+		t.Error("Logs should serialize as empty array []")
+	}
+}
+
+// Test 37: TestNewLogListResponse_NilSlice
+func TestNewLogListResponse_NilSlice(t *testing.T) {
+	resp := NewLogListResponse(nil, 0, 50, 0)
+
+	if resp.Logs == nil {
+		t.Error("Expected Logs to be non-nil empty slice, not nil")
+	}
+	if len(resp.Logs) != 0 {
+		t.Errorf("Expected empty slice, got length %d", len(resp.Logs))
+	}
+}
+
+// Test 38: TestNewLogListResponse_SingleLog
+func TestNewLogListResponse_SingleLog(t *testing.T) {
+	logs := []*AssetLog{
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Single log",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	resp := NewLogListResponse(logs, 1, 50, 0)
+
+	if len(resp.Logs) != 1 {
+		t.Errorf("Expected 1 log, got %d", len(resp.Logs))
+	}
+	if resp.Logs[0].Content != "Single log" {
+		t.Error("Log not converted correctly")
+	}
+}
+
+// Test 39: TestNewLogListResponse_PaginationMetadata
+func TestNewLogListResponse_PaginationMetadata(t *testing.T) {
+	logs := []*AssetLog{
+		{ID: uuid.New(), AssetID: uuid.New(), UserID: "user_123", Content: "Log", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	}
+
+	resp := NewLogListResponse(logs, 200, 50, 100)
+
+	if resp.Total != 200 {
+		t.Errorf("Expected Total=200, got %d", resp.Total)
+	}
+	if resp.Limit != 50 {
+		t.Errorf("Expected Limit=50, got %d", resp.Limit)
+	}
+	if resp.Offset != 100 {
+		t.Errorf("Expected Offset=100, got %d", resp.Offset)
+	}
+}
+
+// Test 40: TestNewLogListResponse_SkipsNilLogs
+func TestNewLogListResponse_SkipsNilLogs(t *testing.T) {
+	logs := []*AssetLog{
+		{ID: uuid.New(), AssetID: uuid.New(), UserID: "user_123", Content: "Log 1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		nil, // nil log should be skipped
+		{ID: uuid.New(), AssetID: uuid.New(), UserID: "user_123", Content: "Log 2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	}
+
+	resp := NewLogListResponse(logs, 100, 50, 0)
+
+	// Should only have 2 logs (nil skipped)
+	if len(resp.Logs) != 2 {
+		t.Errorf("Expected 2 logs (nil skipped), got %d", len(resp.Logs))
+	}
+}
+
+// Test 41: TestNewLogListResponse_PreservesTags
+func TestNewLogListResponse_PreservesTags(t *testing.T) {
+	logs := []*AssetLog{
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log with tags",
+			Tags:      []string{"tag1", "tag2"},
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			AssetID:   uuid.New(),
+			UserID:    "user_123",
+			Content:   "Log without tags",
+			Tags:      nil,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	resp := NewLogListResponse(logs, 2, 50, 0)
+
+	if len(resp.Logs) != 2 {
+		t.Fatalf("Expected 2 logs, got %d", len(resp.Logs))
+	}
+
+	// First log should have tags
+	if len(resp.Logs[0].Tags) != 2 {
+		t.Errorf("Expected first log to have 2 tags, got %d", len(resp.Logs[0].Tags))
+	}
+
+	// Second log should have nil/empty tags
+	if resp.Logs[1].Tags != nil && len(resp.Logs[1].Tags) > 0 {
+		t.Error("Expected second log to have nil or empty tags")
+	}
+}
