@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
@@ -282,4 +283,405 @@ func TestAssetLog_UUID_Fields(t *testing.T) {
 	if !strings.Contains(jsonStr, "660e8400-e29b-41d4-a716-446655440001") {
 		t.Error("AssetID UUID not in standard format in JSON")
 	}
+}
+
+// ========== CreateLogRequest Validation Tests ==========
+
+// Test 10: TestCreateLogRequest_Validation_Valid_AllFields
+func TestCreateLogRequest_Validation_Valid_AllFields(t *testing.T) {
+	validate := validator.New()
+	req := CreateLogRequest{
+		Content: "Fixed nginx by restarting service",
+		Tags:    []string{"nginx", "fix"},
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass, got error: %v", err)
+	}
+}
+
+// Test 11: TestCreateLogRequest_Validation_Valid_ContentOnly
+func TestCreateLogRequest_Validation_Valid_ContentOnly(t *testing.T) {
+	validate := validator.New()
+	req := CreateLogRequest{
+		Content: "Fixed nginx",
+		Tags:    nil,
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass with content only, got error: %v", err)
+	}
+}
+
+// Test 12: TestCreateLogRequest_Validation_Invalid_EmptyContent
+func TestCreateLogRequest_Validation_Invalid_EmptyContent(t *testing.T) {
+	validate := validator.New()
+	req := CreateLogRequest{
+		Content: "",
+	}
+
+	err := validate.Struct(req)
+	if err == nil {
+		t.Error("Expected validation error for empty content")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Content" && fieldError.Tag() == "required" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Content field with 'required' tag")
+		}
+	}
+}
+
+// Test 13: TestCreateLogRequest_Validation_Invalid_ContentTooShort
+func TestCreateLogRequest_Validation_Invalid_ContentTooShort(t *testing.T) {
+	validate := validator.New()
+	req := CreateLogRequest{
+		Content: "a", // 1 character
+	}
+
+	err := validate.Struct(req)
+	if err == nil {
+		t.Error("Expected validation error for content < 2 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Content" && fieldError.Tag() == "min" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Content field with 'min' tag")
+		}
+	}
+}
+
+// Test 14: TestCreateLogRequest_Validation_Invalid_ContentTooLong
+func TestCreateLogRequest_Validation_Invalid_ContentTooLong(t *testing.T) {
+	validate := validator.New()
+	// Create 10,001 character string
+	longContent := strings.Repeat("a", 10001)
+	req := CreateLogRequest{
+		Content: longContent,
+	}
+
+	err := validate.Struct(req)
+	if err == nil {
+		t.Error("Expected validation error for content > 10,000 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Content" && fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Content field with 'max' tag")
+		}
+	}
+}
+
+// Test 15: TestCreateLogRequest_Validation_Valid_ContentAtMaxLength
+func TestCreateLogRequest_Validation_Valid_ContentAtMaxLength(t *testing.T) {
+	validate := validator.New()
+	// Exactly 10,000 characters
+	maxContent := strings.Repeat("a", 10000)
+	req := CreateLogRequest{
+		Content: maxContent,
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass for content at max length (10,000 chars), got error: %v", err)
+	}
+}
+
+// Test 16: TestCreateLogRequest_Validation_Invalid_TagTooLong
+func TestCreateLogRequest_Validation_Invalid_TagTooLong(t *testing.T) {
+	validate := validator.New()
+	// Create tag with 51 characters
+	longTag := strings.Repeat("a", 51)
+	req := CreateLogRequest{
+		Content: "Valid content",
+		Tags:    []string{longTag},
+	}
+
+	err := validate.Struct(req)
+	if err == nil {
+		t.Error("Expected validation error for tag > 50 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			// The dive validation will show up on the array index
+			if fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error with 'max' tag for tag length")
+		}
+	}
+}
+
+// Test 17: TestCreateLogRequest_Validation_Valid_MultipleTags
+func TestCreateLogRequest_Validation_Valid_MultipleTags(t *testing.T) {
+	validate := validator.New()
+	req := CreateLogRequest{
+		Content: "Test content",
+		Tags:    []string{"tag1", "tag2", "tag3", "tag4", "tag5"},
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass for multiple valid tags, got error: %v", err)
+	}
+}
+
+// Test 18: TestCreateLogRequest_Validation_Valid_EmptyTagsArray
+func TestCreateLogRequest_Validation_Valid_EmptyTagsArray(t *testing.T) {
+	validate := validator.New()
+	req := CreateLogRequest{
+		Content: "Test content",
+		Tags:    []string{},
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass for empty tags array, got error: %v", err)
+	}
+}
+
+// Test 19: TestCreateLogRequest_JSONUnmarshaling_Complete
+func TestCreateLogRequest_JSONUnmarshaling_Complete(t *testing.T) {
+	jsonStr := `{
+		"content": "Fixed nginx by restarting service",
+		"tags": ["nginx", "fix"]
+	}`
+
+	var req CreateLogRequest
+	err := json.Unmarshal([]byte(jsonStr), &req)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	if req.Content != "Fixed nginx by restarting service" {
+		t.Errorf("Expected Content 'Fixed nginx by restarting service', got '%s'", req.Content)
+	}
+	if len(req.Tags) != 2 {
+		t.Errorf("Expected 2 tags, got %d", len(req.Tags))
+	}
+}
+
+// Test 20: TestCreateLogRequest_JSONUnmarshaling_ContentOnly
+func TestCreateLogRequest_JSONUnmarshaling_ContentOnly(t *testing.T) {
+	jsonStr := `{"content": "Fixed nginx"}`
+
+	var req CreateLogRequest
+	err := json.Unmarshal([]byte(jsonStr), &req)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	if req.Content != "Fixed nginx" {
+		t.Errorf("Expected Content 'Fixed nginx', got '%s'", req.Content)
+	}
+	if req.Tags != nil && len(req.Tags) > 0 {
+		t.Error("Expected Tags to be nil or empty")
+	}
+}
+
+// ========== UpdateLogRequest Validation Tests ==========
+
+// Test 21: TestUpdateLogRequest_Validation_Valid_AllNil
+func TestUpdateLogRequest_Validation_Valid_AllNil(t *testing.T) {
+	validate := validator.New()
+	req := UpdateLogRequest{
+		Content: nil,
+		Tags:    nil,
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass with all nil fields (partial update), got error: %v", err)
+	}
+}
+
+// Test 22: TestUpdateLogRequest_Validation_Valid_OnlyContentSet
+func TestUpdateLogRequest_Validation_Valid_OnlyContentSet(t *testing.T) {
+	validate := validator.New()
+	content := "New content"
+	req := UpdateLogRequest{
+		Content: &content,
+		Tags:    nil,
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass for only content set, got error: %v", err)
+	}
+}
+
+// Test 23: TestUpdateLogRequest_Validation_Valid_OnlyTagsSet
+func TestUpdateLogRequest_Validation_Valid_OnlyTagsSet(t *testing.T) {
+	validate := validator.New()
+	tags := []string{"new-tag"}
+	req := UpdateLogRequest{
+		Content: nil,
+		Tags:    &tags,
+	}
+
+	err := validate.Struct(req)
+	if err != nil {
+		t.Errorf("Expected validation to pass for only tags set, got error: %v", err)
+	}
+}
+
+// Test 24: TestUpdateLogRequest_Validation_Invalid_ContentTooShort
+func TestUpdateLogRequest_Validation_Invalid_ContentTooShort(t *testing.T) {
+	validate := validator.New()
+	shortContent := "a"
+	req := UpdateLogRequest{
+		Content: &shortContent,
+	}
+
+	err := validate.Struct(req)
+	if err == nil {
+		t.Error("Expected validation error for content < 2 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Content" && fieldError.Tag() == "min" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Content field with 'min' tag")
+		}
+	}
+}
+
+// Test 25: TestUpdateLogRequest_Validation_Invalid_ContentTooLong
+func TestUpdateLogRequest_Validation_Invalid_ContentTooLong(t *testing.T) {
+	validate := validator.New()
+	longContent := strings.Repeat("a", 10001)
+	req := UpdateLogRequest{
+		Content: &longContent,
+	}
+
+	err := validate.Struct(req)
+	if err == nil {
+		t.Error("Expected validation error for content > 10,000 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Content" && fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Content field with 'max' tag")
+		}
+	}
+}
+
+// Test 26: TestUpdateLogRequest_ClearTags_EmptySlice
+func TestUpdateLogRequest_ClearTags_EmptySlice(t *testing.T) {
+	jsonStr := `{"tags": []}`
+
+	var req UpdateLogRequest
+	err := json.Unmarshal([]byte(jsonStr), &req)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	// Tags should point to empty slice (not nil)
+	if req.Tags == nil {
+		t.Error("Expected Tags to point to empty slice, got nil")
+	}
+	if req.Tags != nil && len(*req.Tags) != 0 {
+		t.Error("Expected Tags to point to empty slice")
+	}
+}
+
+// Test 27: TestUpdateLogRequest_KeepTags_OmitField
+func TestUpdateLogRequest_KeepTags_OmitField(t *testing.T) {
+	jsonStr := `{"content": "Updated content"}`
+
+	var req UpdateLogRequest
+	err := json.Unmarshal([]byte(jsonStr), &req)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	// Tags should be nil (keep existing in DB)
+	if req.Tags != nil {
+		t.Error("Expected Tags to be nil when field omitted")
+	}
+}
+
+// Test 28: TestUpdateLogRequest_JSONUnmarshaling_PartialFields
+func TestUpdateLogRequest_JSONUnmarshaling_PartialFields(t *testing.T) {
+	jsonStr := `{"content": "New content"}`
+
+	var req UpdateLogRequest
+	err := json.Unmarshal([]byte(jsonStr), &req)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	if req.Content == nil {
+		t.Error("Expected Content to be non-nil")
+	}
+	if req.Content != nil && *req.Content != "New content" {
+		t.Errorf("Expected Content 'New content', got '%s'", *req.Content)
+	}
+	if req.Tags != nil {
+		t.Error("Expected Tags to be nil")
+	}
+}
+
+// Test 29: TestUpdateLogRequest_DistinguishNilVsEmpty
+func TestUpdateLogRequest_DistinguishNilVsEmpty(t *testing.T) {
+	// Case 1: Nil means "don't update"
+	req1 := UpdateLogRequest{Tags: nil}
+	if req1.Tags != nil {
+		t.Error("Expected Tags to be nil (don't update)")
+	}
+
+	// Case 2: Pointer to empty slice means "clear all tags"
+	emptyTags := []string{}
+	req2 := UpdateLogRequest{Tags: &emptyTags}
+	if req2.Tags == nil {
+		t.Error("Expected Tags to be non-nil pointer")
+	}
+	if req2.Tags != nil && len(*req2.Tags) != 0 {
+		t.Error("Expected Tags to point to empty slice")
+	}
+
+	// This test documents the semantic difference for service layer
+	t.Log("req1.Tags == nil means: don't update tags")
+	t.Log("req2.Tags == &[]string{} means: clear all tags")
 }
