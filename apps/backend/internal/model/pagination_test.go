@@ -154,3 +154,121 @@ func TestPaginationParams_Validation_ZeroValuesValid(t *testing.T) {
 		t.Errorf("Expected validation to pass for zero values (omitempty), got error: %v", err)
 	}
 }
+
+// PaginationMeta Tests
+
+// Test 10: TestNewPaginationMeta_FirstPage
+func TestNewPaginationMeta_FirstPage(t *testing.T) {
+	meta := NewPaginationMeta(100, 20, 0)
+
+	if meta.Total != 100 {
+		t.Errorf("Expected Total to be 100, got %d", meta.Total)
+	}
+	if meta.Limit != 20 {
+		t.Errorf("Expected Limit to be 20, got %d", meta.Limit)
+	}
+	if meta.Offset != 0 {
+		t.Errorf("Expected Offset to be 0, got %d", meta.Offset)
+	}
+	if !meta.HasNext {
+		t.Error("Expected HasNext to be true on first page with more results")
+	}
+	if meta.HasPrev {
+		t.Error("Expected HasPrev to be false on first page")
+	}
+}
+
+// Test 11: TestNewPaginationMeta_MiddlePage
+func TestNewPaginationMeta_MiddlePage(t *testing.T) {
+	meta := NewPaginationMeta(100, 20, 40)
+
+	if meta.Total != 100 {
+		t.Errorf("Expected Total to be 100, got %d", meta.Total)
+	}
+	if !meta.HasNext {
+		t.Error("Expected HasNext to be true on middle page")
+	}
+	if !meta.HasPrev {
+		t.Error("Expected HasPrev to be true on middle page")
+	}
+}
+
+// Test 12: TestNewPaginationMeta_LastPage
+func TestNewPaginationMeta_LastPage(t *testing.T) {
+	meta := NewPaginationMeta(100, 20, 80)
+
+	if meta.HasNext {
+		t.Error("Expected HasNext to be false on last page")
+	}
+	if !meta.HasPrev {
+		t.Error("Expected HasPrev to be true on last page")
+	}
+}
+
+// Test 13: TestNewPaginationMeta_ExactPageBoundary
+func TestNewPaginationMeta_ExactPageBoundary(t *testing.T) {
+	meta := NewPaginationMeta(100, 20, 60)
+
+	// offset 60 + limit 20 = 80, which is still < 100
+	if !meta.HasNext {
+		t.Error("Expected HasNext to be true when offset+limit < total")
+	}
+	if !meta.HasPrev {
+		t.Error("Expected HasPrev to be true when offset > 0")
+	}
+}
+
+// Test 14: TestNewPaginationMeta_SinglePage
+func TestNewPaginationMeta_SinglePage(t *testing.T) {
+	meta := NewPaginationMeta(15, 20, 0)
+
+	if meta.HasNext {
+		t.Error("Expected HasNext to be false when all results fit on one page")
+	}
+	if meta.HasPrev {
+		t.Error("Expected HasPrev to be false on first page")
+	}
+}
+
+// Test 15: TestNewPaginationMeta_EmptyResults
+func TestNewPaginationMeta_EmptyResults(t *testing.T) {
+	meta := NewPaginationMeta(0, 20, 0)
+
+	if meta.Total != 0 {
+		t.Errorf("Expected Total to be 0, got %d", meta.Total)
+	}
+	if meta.HasNext {
+		t.Error("Expected HasNext to be false with no results")
+	}
+	if meta.HasPrev {
+		t.Error("Expected HasPrev to be false with no results")
+	}
+}
+
+// Test 16: TestNewPaginationMeta_LargeOffset
+func TestNewPaginationMeta_LargeOffset(t *testing.T) {
+	meta := NewPaginationMeta(100, 20, 200)
+
+	// offset 200 is beyond total 100
+	if meta.HasNext {
+		t.Error("Expected HasNext to be false when offset exceeds total")
+	}
+	if !meta.HasPrev {
+		t.Error("Expected HasPrev to be true when offset > 0")
+	}
+}
+
+// Test 17: TestNewPaginationMeta_FieldValues
+func TestNewPaginationMeta_FieldValues(t *testing.T) {
+	meta := NewPaginationMeta(100, 20, 40)
+
+	if meta.Total != 100 {
+		t.Errorf("Expected Total=100, got %d", meta.Total)
+	}
+	if meta.Limit != 20 {
+		t.Errorf("Expected Limit=20, got %d", meta.Limit)
+	}
+	if meta.Offset != 40 {
+		t.Errorf("Expected Offset=40, got %d", meta.Offset)
+	}
+}

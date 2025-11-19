@@ -587,3 +587,288 @@ func TestUpdateAssetRequest_DistinguishNilVsEmpty(t *testing.T) {
 	t.Log("req1.Name == nil means: don't update this field")
 	t.Log("req2.Name == &\"\" means: update field to empty string")
 }
+
+// ========== AssetResponse Tests ==========
+
+// Test 23: TestNewAssetResponse_AllFields
+func TestNewAssetResponse_AllFields(t *testing.T) {
+	assetType := "server"
+	hostname := "homelab-01"
+	metadata := json.RawMessage(`{"cpu":"4 cores"}`)
+
+	asset := &Asset{
+		ID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+		UserID:    "user_123",
+		Name:      "My Server",
+		Type:      &assetType,
+		Hostname:  &hostname,
+		Metadata:  metadata,
+		CreatedAt: time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2024, 3, 15, 11, 0, 0, 0, time.UTC),
+	}
+
+	resp := NewAssetResponse(asset)
+
+	if resp == nil {
+		t.Fatal("Expected non-nil response")
+	}
+	if resp.ID != asset.ID {
+		t.Errorf("ID mismatch: %v != %v", resp.ID, asset.ID)
+	}
+	if resp.UserID != asset.UserID {
+		t.Errorf("UserID mismatch: %v != %v", resp.UserID, asset.UserID)
+	}
+	if resp.Name != asset.Name {
+		t.Errorf("Name mismatch: %v != %v", resp.Name, asset.Name)
+	}
+	if resp.Type == nil || *resp.Type != *asset.Type {
+		t.Error("Type not copied correctly")
+	}
+	if resp.Hostname == nil || *resp.Hostname != *asset.Hostname {
+		t.Error("Hostname not copied correctly")
+	}
+	if string(resp.Metadata) != string(asset.Metadata) {
+		t.Error("Metadata not copied correctly")
+	}
+}
+
+// Test 24: TestNewAssetResponse_NilOptionalFields
+func TestNewAssetResponse_NilOptionalFields(t *testing.T) {
+	asset := &Asset{
+		ID:        uuid.New(),
+		UserID:    "user_123",
+		Name:      "My Server",
+		Type:      nil,
+		Hostname:  nil,
+		Metadata:  nil,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	resp := NewAssetResponse(asset)
+
+	if resp.Type != nil {
+		t.Error("Expected Type to be nil")
+	}
+	if resp.Hostname != nil {
+		t.Error("Expected Hostname to be nil")
+	}
+	if resp.Metadata != nil {
+		t.Error("Expected Metadata to be nil")
+	}
+
+	// Verify omitempty works in JSON
+	jsonData, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatalf("Failed to marshal response: %v", err)
+	}
+
+	jsonStr := string(jsonData)
+	if strings.Contains(jsonStr, `"type"`) {
+		t.Error("JSON should not contain 'type' field when nil")
+	}
+	if strings.Contains(jsonStr, `"hostname"`) {
+		t.Error("JSON should not contain 'hostname' field when nil")
+	}
+	if strings.Contains(jsonStr, `"metadata"`) {
+		t.Error("JSON should not contain 'metadata' field when nil")
+	}
+}
+
+// Test 25: TestNewAssetResponse_NilInput
+func TestNewAssetResponse_NilInput(t *testing.T) {
+	resp := NewAssetResponse(nil)
+
+	if resp != nil {
+		t.Error("Expected nil response when input is nil")
+	}
+}
+
+// Test 26: TestNewAssetResponse_MarshalJSON
+func TestNewAssetResponse_MarshalJSON(t *testing.T) {
+	assetType := "vm"
+	asset := &Asset{
+		ID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
+		UserID:    "user_123",
+		Name:      "Test VM",
+		Type:      &assetType,
+		CreatedAt: time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2024, 3, 15, 11, 0, 0, 0, time.UTC),
+	}
+
+	resp := NewAssetResponse(asset)
+	jsonData, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatalf("Failed to marshal response: %v", err)
+	}
+
+	jsonStr := string(jsonData)
+	if !strings.Contains(jsonStr, `"id"`) {
+		t.Error("JSON should contain 'id' field")
+	}
+	if !strings.Contains(jsonStr, `"user_id"`) {
+		t.Error("JSON should contain 'user_id' field")
+	}
+	if !strings.Contains(jsonStr, `"name"`) {
+		t.Error("JSON should contain 'name' field")
+	}
+	if !strings.Contains(jsonStr, `"type"`) {
+		t.Error("JSON should contain 'type' field")
+	}
+	if !strings.Contains(jsonStr, `"created_at"`) {
+		t.Error("JSON should contain 'created_at' field")
+	}
+	if !strings.Contains(jsonStr, `"updated_at"`) {
+		t.Error("JSON should contain 'updated_at' field")
+	}
+}
+
+// ========== AssetListResponse Tests ==========
+
+// Test 27: TestNewAssetListResponse_MultipleAssets
+func TestNewAssetListResponse_MultipleAssets(t *testing.T) {
+	assets := []*Asset{
+		{
+			ID:        uuid.New(),
+			UserID:    "user_123",
+			Name:      "Asset 1",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			UserID:    "user_123",
+			Name:      "Asset 2",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			UserID:    "user_123",
+			Name:      "Asset 3",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	resp := NewAssetListResponse(assets, 100, 20, 0)
+
+	if len(resp.Assets) != 3 {
+		t.Errorf("Expected 3 assets, got %d", len(resp.Assets))
+	}
+	if resp.Total != 100 {
+		t.Errorf("Expected Total=100, got %d", resp.Total)
+	}
+	if resp.Limit != 20 {
+		t.Errorf("Expected Limit=20, got %d", resp.Limit)
+	}
+	if resp.Offset != 0 {
+		t.Errorf("Expected Offset=0, got %d", resp.Offset)
+	}
+
+	// Verify all assets were converted
+	for i, assetResp := range resp.Assets {
+		if assetResp.Name != assets[i].Name {
+			t.Errorf("Asset %d: Name mismatch", i)
+		}
+	}
+}
+
+// Test 28: TestNewAssetListResponse_EmptySlice
+func TestNewAssetListResponse_EmptySlice(t *testing.T) {
+	resp := NewAssetListResponse([]*Asset{}, 0, 20, 0)
+
+	if resp.Assets == nil {
+		t.Error("Expected Assets to be non-nil empty slice, not nil")
+	}
+	if len(resp.Assets) != 0 {
+		t.Errorf("Expected empty slice, got length %d", len(resp.Assets))
+	}
+	if resp.Total != 0 {
+		t.Errorf("Expected Total=0, got %d", resp.Total)
+	}
+
+	// Verify JSON serialization
+	jsonData, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatalf("Failed to marshal: %v", err)
+	}
+
+	jsonStr := string(jsonData)
+	// Empty slice should serialize as [] not null
+	if strings.Contains(jsonStr, `"assets":null`) {
+		t.Error("Assets should serialize as empty array [], not null")
+	}
+	if !strings.Contains(jsonStr, `"assets":[]`) {
+		t.Error("Assets should serialize as empty array []")
+	}
+}
+
+// Test 29: TestNewAssetListResponse_NilSlice
+func TestNewAssetListResponse_NilSlice(t *testing.T) {
+	resp := NewAssetListResponse(nil, 0, 20, 0)
+
+	if resp.Assets == nil {
+		t.Error("Expected Assets to be non-nil empty slice, not nil")
+	}
+	if len(resp.Assets) != 0 {
+		t.Errorf("Expected empty slice, got length %d", len(resp.Assets))
+	}
+}
+
+// Test 30: TestNewAssetListResponse_SingleAsset
+func TestNewAssetListResponse_SingleAsset(t *testing.T) {
+	assets := []*Asset{
+		{
+			ID:        uuid.New(),
+			UserID:    "user_123",
+			Name:      "Single Asset",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	resp := NewAssetListResponse(assets, 1, 20, 0)
+
+	if len(resp.Assets) != 1 {
+		t.Errorf("Expected 1 asset, got %d", len(resp.Assets))
+	}
+	if resp.Assets[0].Name != "Single Asset" {
+		t.Error("Asset not converted correctly")
+	}
+}
+
+// Test 31: TestNewAssetListResponse_PaginationMetadata
+func TestNewAssetListResponse_PaginationMetadata(t *testing.T) {
+	assets := []*Asset{
+		{ID: uuid.New(), UserID: "user_123", Name: "Asset", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	}
+
+	resp := NewAssetListResponse(assets, 100, 20, 40)
+
+	if resp.Total != 100 {
+		t.Errorf("Expected Total=100, got %d", resp.Total)
+	}
+	if resp.Limit != 20 {
+		t.Errorf("Expected Limit=20, got %d", resp.Limit)
+	}
+	if resp.Offset != 40 {
+		t.Errorf("Expected Offset=40, got %d", resp.Offset)
+	}
+}
+
+// Test 32: TestNewAssetListResponse_SkipsNilAssets
+func TestNewAssetListResponse_SkipsNilAssets(t *testing.T) {
+	assets := []*Asset{
+		{ID: uuid.New(), UserID: "user_123", Name: "Asset 1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		nil, // nil asset should be skipped
+		{ID: uuid.New(), UserID: "user_123", Name: "Asset 2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	}
+
+	resp := NewAssetListResponse(assets, 100, 20, 0)
+
+	// Should only have 2 assets (nil skipped)
+	if len(resp.Assets) != 2 {
+		t.Errorf("Expected 2 assets (nil skipped), got %d", len(resp.Assets))
+	}
+}

@@ -30,3 +30,23 @@ func (p *PaginationParams) SetDefaults(defaultLimit int) {
 		p.Offset = 0
 	}
 }
+
+// PaginationMeta contains response metadata for paginated lists
+type PaginationMeta struct {
+	Total   int64 `json:"total"`
+	Limit   int   `json:"limit"`
+	Offset  int   `json:"offset"`
+	HasNext bool  `json:"has_next"`
+	HasPrev bool  `json:"has_prev"`
+}
+
+// NewPaginationMeta creates pagination metadata with calculated HasNext and HasPrev
+func NewPaginationMeta(total int64, limit, offset int) *PaginationMeta {
+	return &PaginationMeta{
+		Total:   total,
+		Limit:   limit,
+		Offset:  offset,
+		HasNext: offset+limit < int(total),
+		HasPrev: offset > 0,
+	}
+}
