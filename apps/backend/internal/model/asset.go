@@ -7,6 +7,26 @@ import (
 	"github.com/google/uuid"
 )
 
+// Asset Types
+const (
+	AssetTypeServer    = "server"
+	AssetTypeVM        = "vm"
+	AssetTypeNAS       = "nas"
+	AssetTypeContainer = "container"
+	AssetTypeNetwork   = "network"
+	AssetTypeOther     = "other"
+)
+
+// IsValidAssetType checks if the given type is a valid asset type
+func IsValidAssetType(t string) bool {
+	switch t {
+	case AssetTypeServer, AssetTypeVM, AssetTypeNAS, AssetTypeContainer, AssetTypeNetwork, AssetTypeOther:
+		return true
+	default:
+		return false
+	}
+}
+
 // Asset represents a homelab asset (server, VM, container, etc.)
 type Asset struct {
 	ID        uuid.UUID       `json:"id" db:"id"`
