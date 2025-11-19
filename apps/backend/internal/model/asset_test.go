@@ -872,3 +872,273 @@ func TestNewAssetListResponse_SkipsNilAssets(t *testing.T) {
 		t.Errorf("Expected 2 assets (nil skipped), got %d", len(resp.Assets))
 	}
 }
+
+// ========== AssetQueryParams Tests ==========
+
+// Test 33: TestAssetQueryParams_SetDefaults_ZeroLimit
+func TestAssetQueryParams_SetDefaults_ZeroLimit(t *testing.T) {
+	params := AssetQueryParams{Limit: 0}
+	params.SetDefaults()
+
+	if params.Limit != DefaultAssetLimit {
+		t.Errorf("Expected Limit to be %d, got %d", DefaultAssetLimit, params.Limit)
+	}
+}
+
+// Test 34: TestAssetQueryParams_SetDefaults_ExcessiveLimit
+func TestAssetQueryParams_SetDefaults_ExcessiveLimit(t *testing.T) {
+	params := AssetQueryParams{Limit: 150}
+	params.SetDefaults()
+
+	if params.Limit != MaxAssetLimit {
+		t.Errorf("Expected Limit to be capped at %d, got %d", MaxAssetLimit, params.Limit)
+	}
+}
+
+// Test 35: TestAssetQueryParams_SetDefaults_ValidLimit
+func TestAssetQueryParams_SetDefaults_ValidLimit(t *testing.T) {
+	params := AssetQueryParams{Limit: 50}
+	params.SetDefaults()
+
+	if params.Limit != 50 {
+		t.Errorf("Expected Limit to remain 50, got %d", params.Limit)
+	}
+}
+
+// Test 36: TestAssetQueryParams_SetDefaults_NegativeOffset
+func TestAssetQueryParams_SetDefaults_NegativeOffset(t *testing.T) {
+	params := AssetQueryParams{Offset: -10}
+	params.SetDefaults()
+
+	if params.Offset != 0 {
+		t.Errorf("Expected Offset to be set to 0, got %d", params.Offset)
+	}
+}
+
+// Test 37: TestAssetQueryParams_SetDefaults_ValidOffset
+func TestAssetQueryParams_SetDefaults_ValidOffset(t *testing.T) {
+	params := AssetQueryParams{Offset: 20}
+	params.SetDefaults()
+
+	if params.Offset != 20 {
+		t.Errorf("Expected Offset to remain 20, got %d", params.Offset)
+	}
+}
+
+// Test 38: TestAssetQueryParams_SetDefaults_EmptySortBy
+func TestAssetQueryParams_SetDefaults_EmptySortBy(t *testing.T) {
+	params := AssetQueryParams{SortBy: ""}
+	params.SetDefaults()
+
+	if params.SortBy != "created_at" {
+		t.Errorf("Expected SortBy to default to 'created_at', got '%s'", params.SortBy)
+	}
+}
+
+// Test 39: TestAssetQueryParams_SetDefaults_ValidSortBy
+func TestAssetQueryParams_SetDefaults_ValidSortBy(t *testing.T) {
+	params := AssetQueryParams{SortBy: "name"}
+	params.SetDefaults()
+
+	if params.SortBy != "name" {
+		t.Errorf("Expected SortBy to remain 'name', got '%s'", params.SortBy)
+	}
+}
+
+// Test 40: TestAssetQueryParams_SetDefaults_EmptySortOrder
+func TestAssetQueryParams_SetDefaults_EmptySortOrder(t *testing.T) {
+	params := AssetQueryParams{SortOrder: ""}
+	params.SetDefaults()
+
+	if params.SortOrder != "desc" {
+		t.Errorf("Expected SortOrder to default to 'desc', got '%s'", params.SortOrder)
+	}
+}
+
+// Test 41: TestAssetQueryParams_SetDefaults_ValidSortOrder
+func TestAssetQueryParams_SetDefaults_ValidSortOrder(t *testing.T) {
+	params := AssetQueryParams{SortOrder: "asc"}
+	params.SetDefaults()
+
+	if params.SortOrder != "asc" {
+		t.Errorf("Expected SortOrder to remain 'asc', got '%s'", params.SortOrder)
+	}
+}
+
+// Test 42: TestAssetQueryParams_SetDefaults_AllDefaults
+func TestAssetQueryParams_SetDefaults_AllDefaults(t *testing.T) {
+	params := AssetQueryParams{}
+	params.SetDefaults()
+
+	if params.Limit != DefaultAssetLimit {
+		t.Errorf("Expected Limit=%d, got %d", DefaultAssetLimit, params.Limit)
+	}
+	if params.Offset != 0 {
+		t.Errorf("Expected Offset=0, got %d", params.Offset)
+	}
+	if params.SortBy != "created_at" {
+		t.Errorf("Expected SortBy='created_at', got '%s'", params.SortBy)
+	}
+	if params.SortOrder != "desc" {
+		t.Errorf("Expected SortOrder='desc', got '%s'", params.SortOrder)
+	}
+}
+
+// Test 43: TestAssetQueryParams_Validation_InvalidSortBy
+func TestAssetQueryParams_Validation_InvalidSortBy(t *testing.T) {
+	validate := validator.New()
+	params := AssetQueryParams{
+		Limit:     20,
+		SortBy:    "invalid_field",
+		SortOrder: "asc",
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for invalid SortBy value")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "SortBy" && fieldError.Tag() == "oneof" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on SortBy field with 'oneof' tag")
+		}
+	}
+}
+
+// Test 44: TestAssetQueryParams_Validation_InvalidSortOrder
+func TestAssetQueryParams_Validation_InvalidSortOrder(t *testing.T) {
+	validate := validator.New()
+	params := AssetQueryParams{
+		Limit:     20,
+		SortBy:    "name",
+		SortOrder: "random",
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for invalid SortOrder value")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "SortOrder" && fieldError.Tag() == "oneof" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on SortOrder field with 'oneof' tag")
+		}
+	}
+}
+
+// Test 45: TestAssetQueryParams_Validation_SearchTooLong
+func TestAssetQueryParams_Validation_SearchTooLong(t *testing.T) {
+	validate := validator.New()
+	longSearch := strings.Repeat("a", 101)
+	params := AssetQueryParams{
+		Limit:  20,
+		Search: &longSearch,
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for Search > 100 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Search" && fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Search field with 'max' tag")
+		}
+	}
+}
+
+// Test 46: TestAssetQueryParams_Validation_TypeTooLong
+func TestAssetQueryParams_Validation_TypeTooLong(t *testing.T) {
+	validate := validator.New()
+	longType := strings.Repeat("a", 51)
+	params := AssetQueryParams{
+		Limit: 20,
+		Type:  &longType,
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for Type > 50 chars")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Type" && fieldError.Tag() == "max" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Type field with 'max' tag")
+		}
+	}
+}
+
+// Test 47: TestAssetQueryParams_Validation_NegativeLimit
+func TestAssetQueryParams_Validation_NegativeLimit(t *testing.T) {
+	validate := validator.New()
+	params := AssetQueryParams{
+		Limit: -5,
+	}
+
+	err := validate.Struct(params)
+	if err == nil {
+		t.Error("Expected validation error for negative Limit")
+	}
+
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		found := false
+		for _, fieldError := range validationErrors {
+			if fieldError.Field() == "Limit" && fieldError.Tag() == "min" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Expected validation error on Limit field with 'min' tag")
+		}
+	}
+}
+
+// Test 48: TestAssetQueryParams_Validation_ValidParams
+func TestAssetQueryParams_Validation_ValidParams(t *testing.T) {
+	validate := validator.New()
+	searchTerm := "server"
+	assetType := "database"
+	params := AssetQueryParams{
+		Limit:     50,
+		Offset:    0,
+		Type:      &assetType,
+		Search:    &searchTerm,
+		SortBy:    "name",
+		SortOrder: "asc",
+	}
+
+	params.SetDefaults()
+	err := validate.Struct(params)
+	if err != nil {
+		t.Errorf("Expected validation to pass for valid params, got error: %v", err)
+	}
+}

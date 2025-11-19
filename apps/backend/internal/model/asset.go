@@ -89,3 +89,32 @@ func NewAssetListResponse(assets []*Asset, total int64, limit, offset int) *Asse
 		Offset: offset,
 	}
 }
+
+// AssetQueryParams represents query parameters for listing assets
+type AssetQueryParams struct {
+	Limit     int     `query:"limit" validate:"omitempty,min=1,max=100"`
+	Offset    int     `query:"offset" validate:"omitempty,min=0"`
+	Type      *string `query:"type" validate:"omitempty,max=50"`
+	Search    *string `query:"search" validate:"omitempty,max=100"`
+	SortBy    string  `query:"sort_by" validate:"omitempty,oneof=name created_at updated_at"`
+	SortOrder string  `query:"sort_order" validate:"omitempty,oneof=asc desc"`
+}
+
+// SetDefaults sets default values for AssetQueryParams
+func (q *AssetQueryParams) SetDefaults() {
+	if q.Limit == 0 {
+		q.Limit = DefaultAssetLimit
+	}
+	if q.Limit > MaxAssetLimit {
+		q.Limit = MaxAssetLimit
+	}
+	if q.Offset < 0 {
+		q.Offset = 0
+	}
+	if q.SortBy == "" {
+		q.SortBy = "created_at"
+	}
+	if q.SortOrder == "" {
+		q.SortOrder = "desc"
+	}
+}
