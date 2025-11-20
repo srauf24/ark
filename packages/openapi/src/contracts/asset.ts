@@ -3,13 +3,12 @@ import {
     ZAsset,
     ZCreateAssetRequest,
     ZUpdateAssetRequest,
-    ZAssetListResponse,
-    ZAssetQueryParams,
     ZErrorResponse,
     ZUuid,
 } from "@gardenjournal/zod";
+import { schemaWithPagination } from "@gardenjournal/zod";
 import { initContract } from "@ts-rest/core";
-import { z } from "zod";
+import z from "zod";
 
 const c = initContract();
 
@@ -22,21 +21,30 @@ export const assetContract = c.router(
             path: "/assets",
             method: "GET",
             description: "Get a paginated list of assets for the authenticated user",
-            query: ZAssetQueryParams,
+            query: z.object({
+                limit: z.coerce.number().int().min(1).max(100).optional(),
+                offset: z.coerce.number().int().min(0).optional(),
+                type: z.enum(["server", "vm", "nas", "container", "network", "other"]).optional(),
+                search: z.string().max(100).optional(),
+                sort_by: z.enum(["name", "created_at", "updated_at"]).optional(),
+                sort_order: z.enum(["asc", "desc"]).optional(),
+            }),
             responses: {
-                200: ZAssetListResponse,
+                200: schemaWithPagination(ZAsset),
             },
             metadata: metadata,
         },
 
         createAsset: {
-            summary: "Create asset",
+            summary: "Create a new asset",
             path: "/assets",
             method: "POST",
             description: "Create a new asset for the authenticated user",
             body: ZCreateAssetRequest,
             responses: {
-                201: ZAsset,
+                201: z.object({
+                    data: ZAsset,
+                }),
                 400: ZErrorResponse,
             },
             metadata: metadata,
@@ -47,9 +55,13 @@ export const assetContract = c.router(
             path: "/assets/:id",
             method: "GET",
             description: "Get a single asset by its ID",
-            pathParams: z.object({ id: ZUuid }),
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             responses: {
-                200: ZAsset,
+                200: z.object({
+                    data: ZAsset,
+                }),
                 404: ZErrorResponse,
             },
             metadata: metadata,
@@ -60,10 +72,14 @@ export const assetContract = c.router(
             path: "/assets/:id",
             method: "PATCH",
             description: "Update an existing asset (partial update)",
-            pathParams: z.object({ id: ZUuid }),
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             body: ZUpdateAssetRequest,
             responses: {
-                200: ZAsset,
+                200: z.object({
+                    data: ZAsset,
+                }),
                 400: ZErrorResponse,
                 404: ZErrorResponse,
             },
@@ -75,7 +91,9 @@ export const assetContract = c.router(
             path: "/assets/:id",
             method: "DELETE",
             description: "Delete an asset and all its associated logs",
-            pathParams: z.object({ id: ZUuid }),
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             responses: {
                 204: z.void(),
             },

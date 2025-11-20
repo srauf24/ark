@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"ark/internal/server"
+
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,7 +89,7 @@ func TestOpenAPISpecHasRequiredEndpoints(t *testing.T) {
 
 	// Required endpoints
 	requiredEndpoints := []string{
-		"/api/status",              // Health check
+		"/status",                  // Health check
 		"/api/v1/assets",           // Asset list/create
 		"/api/v1/assets/{id}",      // Asset get/update/delete
 		"/api/v1/assets/{id}/logs", // Log list/create for asset
@@ -101,8 +103,14 @@ func TestOpenAPISpecHasRequiredEndpoints(t *testing.T) {
 
 // Test 5: Verify handler returns correct content type
 func TestOpenAPIHandler_ContentType(t *testing.T) {
-	// Create handler
-	handler := NewOpenAPIHandler()
+	// Change to backend root directory so handler can find static/openapi.json
+	err := os.Chdir("../..")
+	require.NoError(t, err, "Should be able to change to backend root")
+	defer os.Chdir("internal/handler") // Change back after test
+
+	// Create mock server
+	s := &server.Server{}
+	handler := NewOpenAPIHandler(s)
 
 	// Create test request
 	e := echo.New()
@@ -111,17 +119,23 @@ func TestOpenAPIHandler_ContentType(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Call handler
-	err := handler.ServeOpenAPISpec(c)
+	err = handler.ServeOpenAPISpec(c)
 	require.NoError(t, err, "Handler should not return error")
 
 	// Verify content type
-	assert.Equal(t, "application/json; charset=UTF-8", rec.Header().Get("Content-Type"))
+	assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
 }
 
 // Test 6: Verify handler returns 200 status
 func TestOpenAPIHandler_StatusCode(t *testing.T) {
-	// Create handler
-	handler := NewOpenAPIHandler()
+	// Change to backend root directory so handler can find static/openapi.json
+	err := os.Chdir("../..")
+	require.NoError(t, err, "Should be able to change to backend root")
+	defer os.Chdir("internal/handler") // Change back after test
+
+	// Create mock server
+	s := &server.Server{}
+	handler := NewOpenAPIHandler(s)
 
 	// Create test request
 	e := echo.New()
@@ -130,7 +144,7 @@ func TestOpenAPIHandler_StatusCode(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Call handler
-	err := handler.ServeOpenAPISpec(c)
+	err = handler.ServeOpenAPISpec(c)
 	require.NoError(t, err, "Handler should not return error")
 
 	// Verify status code
@@ -139,8 +153,14 @@ func TestOpenAPIHandler_StatusCode(t *testing.T) {
 
 // Test 7: Verify handler returns valid JSON
 func TestOpenAPIHandler_ValidJSON(t *testing.T) {
-	// Create handler
-	handler := NewOpenAPIHandler()
+	// Change to backend root directory so handler can find static/openapi.json
+	err := os.Chdir("../..")
+	require.NoError(t, err, "Should be able to change to backend root")
+	defer os.Chdir("internal/handler") // Change back after test
+
+	// Create mock server
+	s := &server.Server{}
+	handler := NewOpenAPIHandler(s)
 
 	// Create test request
 	e := echo.New()
@@ -149,7 +169,7 @@ func TestOpenAPIHandler_ValidJSON(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Call handler
-	err := handler.ServeOpenAPISpec(c)
+	err = handler.ServeOpenAPISpec(c)
 	require.NoError(t, err, "Handler should not return error")
 
 	// Verify response is valid JSON
@@ -160,16 +180,22 @@ func TestOpenAPIHandler_ValidJSON(t *testing.T) {
 
 // Test 8: Verify handler response matches static file
 func TestOpenAPIHandler_MatchesStaticFile(t *testing.T) {
+	// Change to backend root directory
+	err := os.Chdir("../..")
+	require.NoError(t, err, "Should be able to change to backend root")
+	defer os.Chdir("internal/handler") // Change back after test
+
 	// Read static file
-	staticData, err := os.ReadFile("../../static/openapi.json")
+	staticData, err := os.ReadFile("static/openapi.json")
 	require.NoError(t, err, "Should be able to read static file")
 
 	var staticSpec map[string]interface{}
 	err = json.Unmarshal(staticData, &staticSpec)
 	require.NoError(t, err, "Static file should be valid JSON")
 
-	// Create handler
-	handler := NewOpenAPIHandler()
+	// Create mock server
+	s := &server.Server{}
+	handler := NewOpenAPIHandler(s)
 
 	// Create test request
 	e := echo.New()

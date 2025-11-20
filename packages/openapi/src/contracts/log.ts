@@ -3,11 +3,10 @@ import {
     ZAssetLog,
     ZCreateLogRequest,
     ZUpdateLogRequest,
-    ZLogListResponse,
-    ZLogQueryParams,
     ZErrorResponse,
     ZUuid,
 } from "@gardenjournal/zod";
+import { schemaWithPagination } from "@gardenjournal/zod";
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
@@ -22,24 +21,39 @@ export const logContract = c.router(
             path: "/assets/:id/logs",
             method: "GET",
             description: "Get a paginated list of logs for a specific asset",
-            pathParams: z.object({ id: ZUuid }),
-            query: ZLogQueryParams,
+            pathParams: z.object({
+                id: ZUuid,
+            }),
+            query: z.object({
+                limit: z.coerce.number().int().min(1).max(200).optional(),
+                offset: z.coerce.number().int().min(0).optional(),
+                tags: z.array(z.string().max(50)).optional(),
+                search: z.string().max(100).optional(),
+                start_date: z.string().datetime().optional(),
+                end_date: z.string().datetime().optional(),
+                sort_by: z.enum(["created_at", "updated_at"]).optional(),
+                sort_order: z.enum(["asc", "desc"]).optional(),
+            }),
             responses: {
-                200: ZLogListResponse,
+                200: schemaWithPagination(ZAssetLog),
                 404: ZErrorResponse,
             },
             metadata: metadata,
         },
 
         createLog: {
-            summary: "Create log for asset",
+            summary: "Create a new log for asset",
             path: "/assets/:id/logs",
             method: "POST",
             description: "Create a new log entry for a specific asset",
-            pathParams: { id: ZUuid },
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             body: ZCreateLogRequest,
             responses: {
-                201: ZAssetLog,
+                201: z.object({
+                    data: ZAssetLog,
+                }),
                 400: ZErrorResponse,
                 404: ZErrorResponse,
             },
@@ -51,9 +65,13 @@ export const logContract = c.router(
             path: "/logs/:id",
             method: "GET",
             description: "Get a single log entry by its ID",
-            pathParams: { id: ZUuid },
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             responses: {
-                200: ZAssetLog,
+                200: z.object({
+                    data: ZAssetLog,
+                }),
                 404: ZErrorResponse,
             },
             metadata: metadata,
@@ -64,10 +82,14 @@ export const logContract = c.router(
             path: "/logs/:id",
             method: "PATCH",
             description: "Update an existing log entry (partial update)",
-            pathParams: { id: ZUuid },
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             body: ZUpdateLogRequest,
             responses: {
-                200: ZAssetLog,
+                200: z.object({
+                    data: ZAssetLog,
+                }),
                 400: ZErrorResponse,
                 404: ZErrorResponse,
             },
@@ -79,7 +101,9 @@ export const logContract = c.router(
             path: "/logs/:id",
             method: "DELETE",
             description: "Delete a log entry",
-            pathParams: { id: ZUuid },
+            pathParams: z.object({
+                id: ZUuid,
+            }),
             responses: {
                 204: z.void(),
             },
