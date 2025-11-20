@@ -8,12 +8,15 @@ import (
 type Handlers struct {
 	Health  *HealthHandler
 	OpenAPI *OpenAPIHandler
-	// TODO: Add Asset and Log handlers when implemented
+	Asset   *AssetHandler
+	Log     *LogHandler
 }
 
 func NewHandlers(s *server.Server, services *service.Services) *Handlers {
 	return &Handlers{
 		Health:  NewHealthHandler(s),
 		OpenAPI: NewOpenAPIHandler(s),
+		Asset:   NewAssetHandler(services.Asset),
+		Log:     NewLogHandler(services.Log),
 	}
 }
