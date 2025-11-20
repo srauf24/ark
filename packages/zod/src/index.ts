@@ -6,8 +6,5 @@ extendZodWithOpenApi(z);
 export * from "./utils.js";
 export * from "./common.js";
 export * from "./health.js";
-export * from "./plant.js";
-export * from "./observation/observation.js";
-export * from "./utils.js";
 export * from "./asset.js";
 export * from "./log.js";

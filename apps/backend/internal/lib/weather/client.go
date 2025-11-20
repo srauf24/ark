@@ -39,15 +39,15 @@ func NewClientWithTimeout(timeout time.Duration) *Client {
 }
 
 // FetchWeather fetches current weather data for given coordinates
-// Returns nil (not error) if the fetch fails - this is intentional to not block observation creation
+// Returns nil (not error) if the fetch fails - this is intentional to not block log entry creation
 func (c *Client) FetchWeather(ctx context.Context, lat, lon float64) (*WeatherData, error) {
 	// Validate coordinates
 	if lat < -90 || lat > 90 {
-		// Return nil without error - don't block observation creation
+		// Return nil without error - don't block log entry creation
 		return nil, nil
 	}
 	if lon < -180 || lon > 180 {
-		// Return nil without error - don't block observation creation
+		// Return nil without error - don't block log entry creation
 		return nil, nil
 	}
 
@@ -59,12 +59,12 @@ func (c *Client) FetchWeather(ctx context.Context, lat, lon float64) (*WeatherDa
 	// Create request with context for cancellation
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		// Return nil without error - don't block observation creation
+		// Return nil without error - don't block log entry creation
 		return nil, nil
 	}
 
 	// Set user agent
-	req.Header.Set("User-Agent", "GardenJournal/1.0")
+	req.Header.Set("User-Agent", "ARK/1.0")
 
 	// Execute request
 	resp, err := c.httpClient.Do(req)
