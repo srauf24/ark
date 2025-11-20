@@ -1,12 +1,12 @@
 import { initContract } from "@ts-rest/core";
 import { healthContract } from "./health.js";
-import { plantContract } from "./plant.js";
-import { observationContract } from "./observation.js";
+import { assetContract } from "./asset.js";
+import { logContract } from "./log.js";
 
 const c = initContract();
 
 export const apiContract = c.router({
-  Health: healthContract,
-  Plant: plantContract,
-  Observation: observationContract,
+  System: healthContract,
+  Assets: assetContract,
+  Logs: logContract,
 });

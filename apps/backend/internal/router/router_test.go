@@ -269,9 +269,9 @@ func TestNewRouter_V1GroupExists(t *testing.T) {
 			"Found legacy observation route: %s", route.Path)
 	}
 
-	// Verify system routes exist outside /api/v1
-	statusRoute := findRoute(routes, "GET", "/status")
-	assert.NotNil(t, statusRoute, "Expected /status route to exist")
+	// Verify system routes exist outside /api/v1 (except status which is now /api/status)
+	statusRoute := findRoute(routes, "GET", "/api/status")
+	assert.NotNil(t, statusRoute, "Expected /api/status route to exist")
 
 	docsRoute := findRoute(routes, "GET", "/docs")
 	assert.NotNil(t, docsRoute, "Expected /docs route to exist")
@@ -300,7 +300,7 @@ func TestNewRouter_MiddlewareApplied(t *testing.T) {
 	assert.Greater(t, apiRouteCount, 0, "Expected API routes to exist")
 
 	// Verify system routes exist (which should NOT have auth middleware)
-	systemRoutes := []string{"/status", "/docs", "/static/*"}
+	systemRoutes := []string{"/api/status", "/docs", "/static/*"}
 	for _, path := range systemRoutes {
 		// System routes should exist
 		found := false
@@ -335,7 +335,7 @@ func TestNewRouter_TotalRouteCount(t *testing.T) {
 			assetRoutes++
 		case strings.Contains(route.Path, "/logs"):
 			logRoutes++
-		case route.Path == "/status" || route.Path == "/docs" || strings.HasPrefix(route.Path, "/static"):
+		case route.Path == "/api/status" || route.Path == "/docs" || strings.HasPrefix(route.Path, "/static"):
 			systemRoutes++
 		}
 	}
