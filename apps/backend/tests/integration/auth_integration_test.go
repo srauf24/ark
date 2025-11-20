@@ -6,13 +6,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog"
 	"ark/internal/config"
 	"ark/internal/handler"
 	"ark/internal/middleware"
+	"ark/internal/router"
 	v1 "ark/internal/router/v1"
 	"ark/internal/server"
+
+	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +46,9 @@ func createTestRouter() *echo.Echo {
 
 	// Register the global error handler (required for proper error handling)
 	e.HTTPErrorHandler = middlewares.Global.GlobalErrorHandler
+
+	// Register system routes (docs, static, health)
+	router.RegisterSystemRoutes(e, handlers)
 
 	// Register v1 routes (which now includes ClerkAuthMiddleware)
 	v1.RegisterRoutes(e, handlers, middlewares)

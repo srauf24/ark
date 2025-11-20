@@ -3,13 +3,14 @@ package router
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
-	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"ark/internal/handler"
 	"ark/internal/middleware"
 	v1 "ark/internal/router/v1"
 	"ark/internal/server"
 	"ark/internal/service"
+
+	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"golang.org/x/time/rate"
 )
 
@@ -52,7 +53,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	)
 
 	// register system routes
-	registerSystemRoutes(router, h)
+	RegisterSystemRoutes(router, h)
 
 	// register versioned routes
 	v1.RegisterRoutes(router, h, middlewares)
