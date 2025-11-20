@@ -1,6 +1,6 @@
-# Go Garden Journal Backend
+# Ark Backend
 
-A production-ready Go backend service for plant care and garden management, built with Echo framework, PostgreSQL, and Clerk authentication. Features clean architecture, comprehensive testing, and structured logging.
+A production-ready Go backend service for homelab asset tracking and configuration log management, built with Echo framework, PostgreSQL, and Clerk authentication. Features clean architecture, comprehensive testing, and structured logging.
 
 ## Quick Start
 
@@ -34,13 +34,13 @@ This backend follows clean architecture principles with clear separation of conc
 
 ```
 backend/
-├── cmd/gardenjournal/        # Application entry point
+├── cmd/ark/                  # Application entry point
 ├── internal/                  # Private application code
 │   ├── config/               # Configuration management (Koanf-based)
 │   ├── database/             # Database connections and migrations (pgx/v5)
 │   ├── handler/              # HTTP request handlers (Echo)
-│   │   ├── plant.go             # Plant CRUD operations
-│   │   └── observation.go       # Observation CRUD operations
+│   │   ├── asset.go             # Asset CRUD operations
+│   │   └── log.go                # Log CRUD operations
 │   ├── service/              # Business logic layer
 │   ├── repository/           # Data access layer (PostgreSQL)
 │   ├── model/                # Domain models and DTOs
@@ -148,41 +148,41 @@ task run
 
 ## Configuration
 
-Configuration is managed through environment variables with the `GARDENJOURNAL_` prefix:
+Configuration is managed through environment variables with the `ARK_` prefix:
 
 ### Required Environment Variables
 
 ```bash
 # Server Configuration
-GARDENJOURNAL_SERVER.PORT="8080"
-GARDENJOURNAL_SERVER.READ_TIMEOUT="30"
-GARDENJOURNAL_SERVER.WRITE_TIMEOUT="30"
+ARK_SERVER.PORT="8080"
+ARK_SERVER.READ_TIMEOUT="30"
+ARK_SERVER.WRITE_TIMEOUT="30"
 
 # Database Configuration
-GARDENJOURNAL_DATABASE.HOST="localhost"
-GARDENJOURNAL_DATABASE.PORT="5432"
-GARDENJOURNAL_DATABASE.USER="your_db_user"
-GARDENJOURNAL_DATABASE.PASSWORD="your_db_password"
-GARDENJOURNAL_DATABASE.NAME="gardenjournal"
-GARDENJOURNAL_DATABASE.SSL_MODE="disable"  # Use "require" in production
+ARK_DATABASE.HOST="localhost"
+ARK_DATABASE.PORT="5432"
+ARK_DATABASE.USER="your_db_user"
+ARK_DATABASE.PASSWORD="your_db_password"
+ARK_DATABASE.NAME="ark"
+ARK_DATABASE.SSL_MODE="disable"  # Use "require" in production
 
 # Clerk Authentication (Required)
-GARDENJOURNAL_AUTH.CLERK.SECRET_KEY="sk_test_..."  # From Clerk Dashboard → API Keys
-GARDENJOURNAL_AUTH.CLERK.JWT_ISSUER="https://your-app.clerk.accounts.dev"  # From Clerk Dashboard → JWT Templates
+ARK_AUTH.CLERK.SECRET_KEY="sk_test_..."  # From Clerk Dashboard → API Keys
+ARK_AUTH.CLERK.JWT_ISSUER="https://your-app.clerk.accounts.dev"  # From Clerk Dashboard → JWT Templates
 
 # Redis (for background jobs)
-GARDENJOURNAL_REDIS.ADDRESS="localhost:6379"
+ARK_REDIS.ADDRESS="localhost:6379"
 
 # Logging & Observability
-GARDENJOURNAL_OBSERVABILITY.LOGGING.LEVEL="debug"  # debug, info, warn, error
-GARDENJOURNAL_OBSERVABILITY.LOGGING.FORMAT="console"  # console or json
+ARK_OBSERVABILITY.LOGGING.LEVEL="debug"  # debug, info, warn, error
+ARK_OBSERVABILITY.LOGGING.FORMAT="console"  # console or json
 
 # Optional: New Relic APM
-GARDENJOURNAL_OBSERVABILITY.NEW_RELIC.LICENSE_KEY="your_license_key"
-GARDENJOURNAL_OBSERVABILITY.NEW_RELIC.APP_LOG_FORWARDING_ENABLED="true"
+ARK_OBSERVABILITY.NEW_RELIC.LICENSE_KEY="your_license_key"
+ARK_OBSERVABILITY.NEW_RELIC.APP_LOG_FORWARDING_ENABLED="true"
 
 # Optional: Resend Email Service
-GARDENJOURNAL_INTEGRATION.RESEND_API_KEY="re_..."
+ARK_INTEGRATION.RESEND_API_KEY="re_..."
 ```
 
 See `.env.sample` for complete configuration options.
@@ -299,16 +299,16 @@ Located in `tests/manual/`:
 Example:
 ```bash
 # Using httpie
-http GET http://localhost:8080/api/v1/plants \
+http GET http://localhost:8080/api/v1/assets \
   Authorization:"Bearer YOUR_JWT_TOKEN"
 
 # Using curl
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  http://localhost:8080/api/v1/plants
+  http://localhost:8080/api/v1/assets
 ```
 
 **Getting a Fresh JWT Token**:
-1. Open your Garden Journal frontend in a browser
+1. Open your Ark frontend in a browser
 2. Open DevTools Console (F12)
 3. Run: `await window.Clerk.session.getToken({ template: "api-test" })`
 4. Copy the token for manual testing
@@ -319,19 +319,19 @@ All API endpoints require authentication via JWT token in the `Authorization` he
 
 ### Available Endpoints
 
-**Plants** (`/api/v1/plants`):
-- `GET /api/v1/plants` - List all plants for authenticated user (paginated)
-- `POST /api/v1/plants` - Create a new plant
-- `GET /api/v1/plants/:id` - Get a specific plant by ID
-- `PUT /api/v1/plants/:id` - Update a plant
-- `DELETE /api/v1/plants/:id` - Delete a plant
+**Assets** (`/api/v1/assets`):
+- `GET /api/v1/assets` - List all assets for authenticated user (paginated)
+- `POST /api/v1/assets` - Create a new asset
+- `GET /api/v1/assets/:id` - Get a specific asset by ID
+- `PATCH /api/v1/assets/:id` - Update an asset
+- `DELETE /api/v1/assets/:id` - Delete an asset
 
-**Observations** (`/api/v1/observations`):
-- `GET /api/v1/observations` - List all observations for authenticated user (paginated)
-- `POST /api/v1/observations` - Create a new observation
-- `GET /api/v1/observations/:id` - Get a specific observation by ID
-- `PUT /api/v1/observations/:id` - Update an observation
-- `DELETE /api/v1/observations/:id` - Delete an observation
+**Logs** (`/api/v1/logs`):
+- `GET /api/v1/assets/:id/logs` - List all logs for a specific asset (paginated)
+- `POST /api/v1/assets/:id/logs` - Create a new log for an asset
+- `GET /api/v1/logs/:id` - Get a specific log by ID
+- `PATCH /api/v1/logs/:id` - Update a log
+- `DELETE /api/v1/logs/:id` - Delete a log
 
 **Authentication**:
 All requests must include:
@@ -374,9 +374,9 @@ task run
 
 ### Database Permission Denied
 ```bash
-# Error: permission denied for table plants
-psql -U postgres -d gardenjournal -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO your_db_user;"
-psql -U postgres -d gardenjournal -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO your_db_user;"
+# Error: permission denied for table assets
+psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO your_db_user;"
+psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO your_db_user;"
 ```
 
 ### 401 Unauthorized Errors
@@ -390,20 +390,20 @@ psql -U postgres -d gardenjournal -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN S
 **Debugging steps**:
 - Check server logs for detailed error messages
 - Decode token at https://jwt.io to verify expiration
-- Verify `iss` claim matches `GARDENJOURNAL_AUTH.CLERK.JWT_ISSUER`
+- Verify `iss` claim matches `ARK_AUTH.CLERK.JWT_ISSUER`
 - Generate a fresh token from the frontend
 - Confirm Clerk Secret Key is correct
 
 ### Database Connection Failed
 ```bash
 # Test database connection
-psql -U your_db_user -d gardenjournal -c "SELECT 1"
+psql -U your_db_user -d ark -c "SELECT 1"
 
 # Check if database exists
-psql -U postgres -l | grep gardenjournal
+psql -U postgres -l | grep ark
 
 # Create database if it doesn't exist
-psql -U postgres -c "CREATE DATABASE gardenjournal;"
+psql -U postgres -c "CREATE DATABASE ark;"
 ```
 
 ### Redis Connection Failed

@@ -1,25 +1,9 @@
-Ark Project Context
-⚠️ Project Transition Notice
-This repository was previously the garden_journal project and is being repurposed for Ark.
-What this means:
+# Ark Project Context
 
-Any references to "garden_journal", "plants", "observations" should be replaced with Ark equivalents (assets, logs)
-Old code/files are being migrated or removed - see MVP tickets (ARK-1 through ARK-22)
-If you encounter garden_journal code, it should be updated to Ark or deleted
-Configuration may still reference old names - these need updating
+> [!NOTE]
+> This project was migrated from the garden_journal codebase. The migration is complete - all plant/observation code has been replaced with asset/log equivalents. Module name updated to `ark`, database name is `ark`.
 
-Key Changes:
-Garden JournalArk EquivalentPlantsAssetsObservationsLogs (AssetLogs)Plant species/varietyAsset type/hostnamePlant notesLog content-AI query (new feature)
-During Development:
-
-Prioritize Ark implementation over garden_journal compatibility
-Remove old plant/observation routes, handlers, models as you build Ark equivalents
-Update import paths from garden_journal to ark
-Module in go.mod renamed from garden_journal to ark ✅ (ARK-1 complete)
-Database name updated from gardenjournal to ark
-
-
-Overview
+## Overview
 Ark is a homelab asset tracking and configuration log management application with AI-powered search. Built with Go (backend) and TypeScript/React (frontend) in a Turborepo monorepo.
 Core Use Case: Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes. AI assistant helps query logs in natural language.
 
@@ -51,21 +35,32 @@ bashapps/backend/
 │   ├── config/                # Koanf-based configuration
 │   ├── database/migrations/   # SQL migrations (tern)
 │   ├── handler/               # HTTP handlers (Echo)
-│   │   ├── asset.go              # Asset CRUD (replaces plant.go)
-│   │   ├── log.go                # Log CRUD (replaces observation.go)
-│   │   ├── ai.go                 # AI query endpoint (NEW)
-│   │   └── health.go             # Health check endpoint (KEEP)
+│   │   ├── asset.go              # Asset CRUD operations
+│   │   ├── log.go                # Log CRUD operations
+│   │   ├── ai.go                 # AI query endpoint (PLANNED - not yet implemented)
+│   │   ├── health.go             # Health check endpoint
+│   │   ├── openapi.go            # OpenAPI spec endpoint
+│   │   ├── base.go               # Base handler utilities
+│   │   └── handlers.go           # Handler aggregator
 │   ├── service/               # Business logic
-│   │   ├── asset_service.go      # (replaces plant_service.go)
-│   │   ├── log_service.go        # (replaces observation_service.go)
-│   │   └── ai_service.go         # RAG implementation (NEW)
+│   │   ├── asset_service.go      # Asset business logic
+│   │   ├── log_service.go        # Log business logic
+│   │   ├── ai_service.go         # RAG implementation (PLANNED - not yet implemented)
+│   │   ├── auth.go               # Auth service interface
+│   │   ├── services.go           # Service aggregator
+│   │   └── test_helpers.go       # Testing utilities
 │   ├── repository/            # Data access (PostgreSQL)
-│   │   ├── asset_repository.go   # (replaces plant_repository.go)
-│   │   └── log_repository.go     # Includes FTS methods (replaces observation_repository.go)
+│   │   ├── asset_repository.go   # Asset data access
+│   │   ├── log_repository.go     # Log data access with FTS methods
+│   │   └── repositories.go       # Repository aggregator
 │   ├── model/                 # Domain models & DTOs
-│   │   ├── asset.go              # (replaces plant.go)
-│   │   ├── log.go                # (replaces observation.go)
-│   │   └── ai.go                 # (NEW)
+│   │   ├── asset.go              # Asset domain model
+│   │   ├── log.go                # Log domain model
+│   │   ├── ai.go                 # AI query models (PLANNED - not yet implemented)
+│   │   ├── pagination.go         # Pagination models
+│   │   ├── response.go           # API response models
+│   │   ├── base.go               # Base model utilities
+│   │   └── weathersnapshot/      # Weather models (legacy, kept for reference)
 │   ├── middleware/            # HTTP middleware (REUSE)
 │   │   ├── auth.go               # Two-phase Clerk authentication
 │   │   ├── global.go             # Error handling, logging, CORS
@@ -74,22 +69,31 @@ bashapps/backend/
 │   │   └── middleware.go         # Middleware aggregator
 │   ├── router/v1/             # Route registration
 │   ├── lib/                   # Shared utilities
-│   │   ├── jwt/                  # JWT verification (REUSE)
-│   │   ├── errs/                 # Custom error types (REUSE)
-│   │   ├── llm/                  # LLM client (OpenAI) (NEW)
-│   │   ├── email/                # Email client (Resend) (KEEP)
-│   │   ├── job/                  # Background job processing (KEEP)
-│   │   └── weather/              # Weather API integration (KEEP for future)
-│   ├── logger/                # Logging setup (REUSE)
-│   ├── server/                # Server config (REUSE)
-│   └── validation/            # Request validation (REUSE)
-├── templates/              # Email templates (KEEP)
+│   │   ├── jwt/                  # JWT verification
+│   │   ├── llm/                  # LLM client (OpenAI) (PLANNED - not yet implemented)
+│   │   ├── email/                # Email client (Resend)
+│   │   ├── job/                  # Background job processing
+│   │   ├── utils/                # General utilities
+│   │   └── weather/              # Weather API integration (legacy, kept for reference)
+│   ├── logger/                # Logging setup
+│   ├── server/                # Server config
+│   ├── validation/            # Request validation
+│   ├── errs/                  # Error types
+│   ├── sqlerr/                # SQL error handling
+│   └── testing/               # Testing utilities
+├── templates/              # Email templates
 │   └── emails/
-│       └── welcome.html        # Update branding for Ark
-├── static/                 # Static files (KEEP)
+│       └── welcome.html        # Welcome email template
+├── static/                 # Static files
+│   └── openapi.json           # OpenAPI specification
 └── tests/
     ├── integration/           # Integration tests
-    └── manual/                # .http files (asset, log, ai, e2e)
+    └── manual/                # Manual test files
+        ├── test_auth.http        # Authentication testing
+        ├── asset.http            # Asset CRUD (TO BE CREATED)
+        ├── log.http              # Log CRUD (TO BE CREATED)
+        ├── ai.http               # AI queries (TO BE CREATED)
+        └── e2e_ai_flow.http      # E2E AI flow (TO BE CREATED)
 Frontend Structure
 bashapps/web/src/
 ├── components/
@@ -448,74 +452,67 @@ Triggers:
 Auto-update updated_at timestamp on changes
 
 
-Testing
-Manual Tests (tests/manual/*.http):
+## Testing
 
-asset.http - Asset CRUD with error cases (replaces plant.http)
-log.http - Log CRUD with tags validation (replaces observation.http)
-ai.http - AI queries with various questions (NEW)
-e2e_ai_flow.http - Complete flow: create asset → add logs → query AI (NEW)
-test_auth.http - Authentication testing (KEEP, update for Ark)
+**Manual Tests** (`tests/manual/`):
+- `test_auth.http` - Authentication testing (EXISTS)
+- `migration_test_data.sql` - Test data for migration validation (EXISTS)
+- `migration_validation.sql` - Migration validation queries (EXISTS)
+- `asset.http` - Asset CRUD with error cases (TO BE CREATED)
+- `log.http` - Log CRUD with tags validation (TO BE CREATED)
+- `ai.http` - AI queries with various questions (TO BE CREATED)
+- `e2e_ai_flow.http` - Complete flow: create asset → add logs → query AI (TO BE CREATED)
 
-Integration Tests:
+**Integration Tests:**
+- Full middleware chain
+- Auth verification
+- Error handling (404, 400, 401, 504)
+- Uses httptest for request/response
+- New Relic transaction tracking
 
-Full middleware chain
-Auth verification
-Error handling (404, 400, 401, 504)
-Uses httptest for request/response
-New Relic transaction tracking
+**Unit Tests:**
+- Config loading
+- JWT verification
+- Middleware behavior
+- Service layer logic
+- Repository data access
+- Model validation
+- LLM client (with mocks, when implemented)
 
-Unit Tests:
+## Common Issues
 
-Config loading
-JWT verification (reuse from garden_journal)
-Middleware behavior (reuse from garden_journal)
-LLM client (NEW, with mocks)
+**Port in use:**
+```bash
+lsof -ti:8080 | xargs kill -9
+```
 
-Note: Garden_journal test patterns can be reused. Update test data from plants/observations to assets/logs.
+**Database permissions:**
+```bash
+psql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ark_user;"
+```
 
-Common Issues
-Port in use:
-bashlsof -ti:8080 | xargs kill -9
-Database permissions:
-bashpsql -U postgres -d ark -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ark_user;"
-JWT invalid/expired:
+**JWT invalid/expired:**
+- Verify at https://jwt.io
+- Check `iss` matches `CLERK.JWT_ISSUER`
+- Generate fresh token from browser console
 
-Verify at https://jwt.io
-Check iss matches CLERK.JWT_ISSUER
-Generate fresh token from browser console
+**OpenAI errors:**
+- 401: Check `OPENAI.API_KEY`
+- 429: Rate limit, wait or upgrade plan
+- 504: Timeout, try simpler question
 
-OpenAI errors:
+**AI returns "no logs":**
+- Verify logs exist for asset
+- Check `asset_id` matches in request
 
-401: Check OPENAI.API_KEY
-429: Rate limit, wait or upgrade plan
-504: Timeout, try simpler question
+**Redis connection errors:**
+- Verify Redis is running: `redis-cli ping`
+- Check `REDIS.ADDRESS` in .env
 
-AI returns "no logs":
-
-Verify logs exist for asset
-Check asset_id matches in request
-
-Module name errors:
-
-If you see import errors like cannot find package "garden_journal", ARK-1 ticket already renamed module to ark
-Run go mod tidy to refresh dependencies
-
-Old routes still registered:
-
-Remove plant/observation route registration from router/v1/routes.go
-Delete old handler files after replacing with Ark equivalents
-
-Redis connection errors:
-
-Verify Redis is running: redis-cli ping
-Check REDIS.ADDRESS in .env
-
-Email sending failures:
-
-Verify Resend API key is valid
-Check Resend dashboard for errors
-Review email service logs
+**Email sending failures:**
+- Verify Resend API key is valid
+- Check Resend dashboard for errors
+- Review email service logs
 
 
 Error Handling
