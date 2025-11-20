@@ -5,6 +5,7 @@ import (
 
 	"ark/internal/repository"
 	"ark/internal/server"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -218,7 +219,7 @@ func TestServices_Integration_WithRealDependencies(t *testing.T) {
 	// 2. Create real repositories
 	// 3. Create services with real dependencies
 	// 4. Verify all services can perform basic operations
-	// 5. Verify cross-service operations (e.g., create plant, then observation)
+	// 5. Verify cross-service operations (e.g., create asset, then log)
 
 	t.Log("Integration test for services with real dependencies")
 }
