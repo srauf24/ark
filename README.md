@@ -28,6 +28,9 @@ ark/
 ├── turbo.json            # Turborepo configuration
 └── README.md             # This file
 ```
+## OpenApi Documentation 
+<img width="1512" height="834" alt="image" src="https://github.com/user-attachments/assets/b95d92ab-72c9-47ce-943e-7de22f90492b" />
+
 
 ## Quick Start
 
