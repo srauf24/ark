@@ -8,7 +8,7 @@ const c = initContract();
 export const healthContract = c.router({
   getHealth: {
     summary: "Get health",
-    path: "/status",
+    path: "/api/status",
     method: "GET",
     description: "Get health status",
     responses: {

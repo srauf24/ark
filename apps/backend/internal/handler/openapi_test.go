@@ -89,7 +89,7 @@ func TestOpenAPISpecHasRequiredEndpoints(t *testing.T) {
 
 	// Required endpoints
 	requiredEndpoints := []string{
-		"/status",                  // Health check
+		"/api/status",              // Health check
 		"/api/v1/assets",           // Asset list/create
 		"/api/v1/assets/{id}",      // Asset get/update/delete
 		"/api/v1/assets/{id}/logs", // Log list/create for asset
