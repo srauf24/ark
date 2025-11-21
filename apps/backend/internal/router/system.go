@@ -6,8 +6,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func registerSystemRoutes(r *echo.Echo, h *handler.Handlers) {
-	r.GET("/status", h.Health.CheckHealth)
+func RegisterSystemRoutes(r *echo.Echo, h *handler.Handlers) {
+	r.GET("/api/status", h.Health.CheckHealth)
 
 	r.Static("/static", "static")
 

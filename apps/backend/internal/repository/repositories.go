@@ -3,9 +3,13 @@ package repository
 import "ark/internal/server"
 
 type Repositories struct {
-	// TODO: Add Asset and Log repositories when implemented
+	Asset *AssetRepository
+	Log   *LogRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {
-	return &Repositories{}
+	return &Repositories{
+		Asset: NewAssetRepository(s.DB.Pool),
+		Log:   NewLogRepository(s.DB.Pool),
+	}
 }

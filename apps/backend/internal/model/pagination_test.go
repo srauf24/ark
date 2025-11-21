@@ -58,6 +58,19 @@ func TestPaginationParams_SetDefaults_ValidValues(t *testing.T) {
 	}
 }
 
+// Test 4a: TestPaginationParams_SetDefaults_ExceedsMax
+func TestPaginationParams_SetDefaults_ExceedsMax(t *testing.T) {
+	params := PaginationParams{Limit: 200, Offset: 10}
+	params.SetDefaults(20)
+
+	if params.Limit != 100 {
+		t.Errorf("Expected Limit to be capped at 100, got %d", params.Limit)
+	}
+	if params.Offset != 10 {
+		t.Errorf("Expected Offset to stay 10, got %d", params.Offset)
+	}
+}
+
 // Test 5: TestPaginationParams_Validation_ValidParams
 func TestPaginationParams_Validation_ValidParams(t *testing.T) {
 	validate := validator.New()

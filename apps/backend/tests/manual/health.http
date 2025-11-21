@@ -1,0 +1,12 @@
+### Health Check
+GET http://localhost:8080/api/status
+
+### Expected Response
+# HTTP/1.1 200 OK
+# Content-Type: application/json
+#
+# {
+#   "status": "ok",
+#   "environment": "dev",
+#   "version": "1.0.0"
+# }

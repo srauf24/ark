@@ -1,12 +1,12 @@
 {
   "openapi": "3.0.2",
   "paths": {
-    "/status": {
+    "/api/status": {
       "get": {
         "description": "Get health status",
         "summary": "Get health",
         "tags": [
-          "Health"
+          "System"
         ],
         "parameters": [],
         "operationId": "getHealth",
@@ -90,22 +90,14 @@
         }
       }
     },
-    "/v1/plants": {
+    "/api/v1/assets": {
       "get": {
-        "description": "Get all plants for the authenticated user",
-        "summary": "Get all plants",
+        "description": "Get a paginated list of assets for the authenticated user",
+        "summary": "List assets",
         "tags": [
-          "Plant"
+          "Assets"
         ],
         "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
           {
             "name": "limit",
             "in": "query",
@@ -116,29 +108,26 @@
             }
           },
           {
-            "name": "sort",
+            "name": "offset",
             "in": "query",
             "schema": {
-              "type": "string",
-              "enum": [
-                "created_at",
-                "updated_at",
-                "name",
-                "species",
-                "location",
-                "planted_date",
-                "sort_order"
-              ]
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
             }
           },
           {
-            "name": "order",
+            "name": "type",
             "in": "query",
             "schema": {
               "type": "string",
               "enum": [
-                "asc",
-                "desc"
+                "server",
+                "vm",
+                "nas",
+                "container",
+                "network",
+                "other"
               ]
             }
           },
@@ -147,43 +136,34 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "minLength": 1
+              "maxLength": 100
             }
           },
           {
-            "name": "species",
+            "name": "sort_by",
             "in": "query",
             "schema": {
               "type": "string",
-              "minLength": 1
+              "enum": [
+                "name",
+                "created_at",
+                "updated_at"
+              ]
             }
           },
           {
-            "name": "location",
+            "name": "sort_order",
             "in": "query",
             "schema": {
               "type": "string",
-              "minLength": 1
-            }
-          },
-          {
-            "name": "plantedFrom",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "name": "plantedTo",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           }
         ],
-        "operationId": "getPlants",
+        "operationId": "listAssets",
         "responses": {
           "200": {
             "description": "200",
@@ -209,7 +189,7 @@
                             "type": "string",
                             "format": "date-time"
                           },
-                          "userId": {
+                          "user_id": {
                             "type": "string"
                           },
                           "name": {
@@ -217,117 +197,37 @@
                             "minLength": 1,
                             "maxLength": 100
                           },
-                          "species": {
+                          "type": {
                             "type": "string",
-                            "minLength": 1,
-                            "maxLength": 100
+                            "enum": [
+                              "server",
+                              "vm",
+                              "nas",
+                              "container",
+                              "network",
+                              "other"
+                            ],
+                            "nullable": true
                           },
-                          "location": {
+                          "hostname": {
                             "type": "string",
                             "maxLength": 255,
                             "nullable": true
                           },
-                          "plantedDate": {
-                            "type": "string",
-                            "format": "date-time",
-                            "nullable": true
-                          },
-                          "notes": {
-                            "type": "string",
-                            "maxLength": 1000,
-                            "nullable": true
-                          },
                           "metadata": {
                             "type": "object",
-                            "properties": {
-                              "tags": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              },
-                              "wateringFrequency": {
-                                "type": "string"
-                              },
-                              "lastWateredAt": {
-                                "type": "string",
-                                "format": "date-time"
-                              },
-                              "sunlightLevel": {
-                                "type": "string"
-                              },
-                              "soilType": {
-                                "type": "string"
-                              },
-                              "potSizeCm": {
-                                "type": "number"
-                              },
-                              "fertilizerType": {
-                                "type": "string"
-                              },
-                              "lastFertilizedAt": {
-                                "type": "string",
-                                "format": "date-time"
-                              },
-                              "lastWeatherSnapshotId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "averageTempC": {
-                                "type": "number"
-                              },
-                              "averageSunshineHrs": {
-                                "type": "number"
-                              },
-                              "healthStatus": {
-                                "type": "string"
-                              },
-                              "growthStage": {
-                                "type": "string"
-                              },
-                              "heightCm": {
-                                "type": "number"
-                              },
-                              "colorTag": {
-                                "type": "string"
-                              },
-                              "imageUrl": {
-                                "type": "string",
-                                "format": "uri"
-                              },
-                              "emojiIcon": {
-                                "type": "string"
-                              },
-                              "aiInsightSummary": {
-                                "type": "string"
-                              }
-                            },
-                            "additionalProperties": true,
-                            "nullable": true
-                          },
-                          "sortOrder": {
-                            "type": "integer"
-                          },
-                          "observations": {
-                            "type": "array",
-                            "items": {
+                            "additionalProperties": {
                               "nullable": true
-                            }
+                            },
+                            "nullable": true
                           }
                         },
                         "required": [
                           "id",
                           "createdAt",
                           "updatedAt",
-                          "userId",
-                          "name",
-                          "species",
-                          "location",
-                          "plantedDate",
-                          "notes",
-                          "metadata",
-                          "sortOrder",
-                          "observations"
+                          "user_id",
+                          "name"
                         ]
                       }
                     },
@@ -363,13 +263,13 @@
         ]
       },
       "post": {
-        "description": "Create a new plant for the authenticated user",
-        "summary": "Create a new plant",
+        "description": "Create a new asset for the authenticated user",
+        "summary": "Create a new asset",
         "tags": [
-          "Plant"
+          "Assets"
         ],
         "parameters": [],
-        "operationId": "createPlant",
+        "operationId": "createAsset",
         "requestBody": {
           "description": "Body",
           "content": {
@@ -382,94 +282,30 @@
                     "minLength": 1,
                     "maxLength": 100
                   },
-                  "species": {
+                  "type": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
+                    "enum": [
+                      "server",
+                      "vm",
+                      "nas",
+                      "container",
+                      "network",
+                      "other"
+                    ]
                   },
-                  "location": {
+                  "hostname": {
                     "type": "string",
                     "maxLength": 255
                   },
-                  "plantedDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "notes": {
-                    "type": "string",
-                    "maxLength": 1000
-                  },
                   "metadata": {
                     "type": "object",
-                    "properties": {
-                      "tags": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "wateringFrequency": {
-                        "type": "string"
-                      },
-                      "lastWateredAt": {
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "sunlightLevel": {
-                        "type": "string"
-                      },
-                      "soilType": {
-                        "type": "string"
-                      },
-                      "potSizeCm": {
-                        "type": "number"
-                      },
-                      "fertilizerType": {
-                        "type": "string"
-                      },
-                      "lastFertilizedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "lastWeatherSnapshotId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "averageTempC": {
-                        "type": "number"
-                      },
-                      "averageSunshineHrs": {
-                        "type": "number"
-                      },
-                      "healthStatus": {
-                        "type": "string"
-                      },
-                      "growthStage": {
-                        "type": "string"
-                      },
-                      "heightCm": {
-                        "type": "number"
-                      },
-                      "colorTag": {
-                        "type": "string"
-                      },
-                      "imageUrl": {
-                        "type": "string",
-                        "format": "uri"
-                      },
-                      "emojiIcon": {
-                        "type": "string"
-                      },
-                      "aiInsightSummary": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
+                    "additionalProperties": {
+                      "nullable": true
+                    }
                   }
                 },
                 "required": [
-                  "name",
-                  "species"
+                  "name"
                 ]
               }
             }
@@ -498,7 +334,7 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "userId": {
+                        "user_id": {
                           "type": "string"
                         },
                         "name": {
@@ -506,110 +342,37 @@
                           "minLength": 1,
                           "maxLength": 100
                         },
-                        "species": {
+                        "type": {
                           "type": "string",
-                          "minLength": 1,
-                          "maxLength": 100
+                          "enum": [
+                            "server",
+                            "vm",
+                            "nas",
+                            "container",
+                            "network",
+                            "other"
+                          ],
+                          "nullable": true
                         },
-                        "location": {
+                        "hostname": {
                           "type": "string",
                           "maxLength": 255,
                           "nullable": true
                         },
-                        "plantedDate": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "notes": {
-                          "type": "string",
-                          "maxLength": 1000,
-                          "nullable": true
-                        },
                         "metadata": {
                           "type": "object",
-                          "properties": {
-                            "tags": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "wateringFrequency": {
-                              "type": "string"
-                            },
-                            "lastWateredAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "sunlightLevel": {
-                              "type": "string"
-                            },
-                            "soilType": {
-                              "type": "string"
-                            },
-                            "potSizeCm": {
-                              "type": "number"
-                            },
-                            "fertilizerType": {
-                              "type": "string"
-                            },
-                            "lastFertilizedAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "lastWeatherSnapshotId": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "averageTempC": {
-                              "type": "number"
-                            },
-                            "averageSunshineHrs": {
-                              "type": "number"
-                            },
-                            "healthStatus": {
-                              "type": "string"
-                            },
-                            "growthStage": {
-                              "type": "string"
-                            },
-                            "heightCm": {
-                              "type": "number"
-                            },
-                            "colorTag": {
-                              "type": "string"
-                            },
-                            "imageUrl": {
-                              "type": "string",
-                              "format": "uri"
-                            },
-                            "emojiIcon": {
-                              "type": "string"
-                            },
-                            "aiInsightSummary": {
-                              "type": "string"
-                            }
+                          "additionalProperties": {
+                            "nullable": true
                           },
-                          "additionalProperties": true,
                           "nullable": true
-                        },
-                        "sortOrder": {
-                          "type": "integer"
                         }
                       },
                       "required": [
                         "id",
                         "createdAt",
                         "updatedAt",
-                        "userId",
-                        "name",
-                        "species",
-                        "location",
-                        "plantedDate",
-                        "notes",
-                        "metadata",
-                        "sortOrder"
+                        "user_id",
+                        "name"
                       ]
                     }
                   },
@@ -649,12 +412,12 @@
         ]
       }
     },
-    "/v1/plants/{id}": {
+    "/api/v1/assets/{id}": {
       "get": {
-        "description": "Get a single plant by ID with populated observations",
-        "summary": "Get plant by ID",
+        "description": "Get a single asset by its ID",
+        "summary": "Get asset by ID",
         "tags": [
-          "Plant"
+          "Assets"
         ],
         "parameters": [
           {
@@ -667,7 +430,7 @@
             }
           }
         ],
-        "operationId": "getPlantById",
+        "operationId": "getAssetById",
         "responses": {
           "200": {
             "description": "200",
@@ -691,7 +454,7 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "userId": {
+                        "user_id": {
                           "type": "string"
                         },
                         "name": {
@@ -699,117 +462,37 @@
                           "minLength": 1,
                           "maxLength": 100
                         },
-                        "species": {
+                        "type": {
                           "type": "string",
-                          "minLength": 1,
-                          "maxLength": 100
+                          "enum": [
+                            "server",
+                            "vm",
+                            "nas",
+                            "container",
+                            "network",
+                            "other"
+                          ],
+                          "nullable": true
                         },
-                        "location": {
+                        "hostname": {
                           "type": "string",
                           "maxLength": 255,
                           "nullable": true
                         },
-                        "plantedDate": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "notes": {
-                          "type": "string",
-                          "maxLength": 1000,
-                          "nullable": true
-                        },
                         "metadata": {
                           "type": "object",
-                          "properties": {
-                            "tags": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "wateringFrequency": {
-                              "type": "string"
-                            },
-                            "lastWateredAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "sunlightLevel": {
-                              "type": "string"
-                            },
-                            "soilType": {
-                              "type": "string"
-                            },
-                            "potSizeCm": {
-                              "type": "number"
-                            },
-                            "fertilizerType": {
-                              "type": "string"
-                            },
-                            "lastFertilizedAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "lastWeatherSnapshotId": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "averageTempC": {
-                              "type": "number"
-                            },
-                            "averageSunshineHrs": {
-                              "type": "number"
-                            },
-                            "healthStatus": {
-                              "type": "string"
-                            },
-                            "growthStage": {
-                              "type": "string"
-                            },
-                            "heightCm": {
-                              "type": "number"
-                            },
-                            "colorTag": {
-                              "type": "string"
-                            },
-                            "imageUrl": {
-                              "type": "string",
-                              "format": "uri"
-                            },
-                            "emojiIcon": {
-                              "type": "string"
-                            },
-                            "aiInsightSummary": {
-                              "type": "string"
-                            }
-                          },
-                          "additionalProperties": true,
-                          "nullable": true
-                        },
-                        "sortOrder": {
-                          "type": "integer"
-                        },
-                        "observations": {
-                          "type": "array",
-                          "items": {
+                          "additionalProperties": {
                             "nullable": true
-                          }
+                          },
+                          "nullable": true
                         }
                       },
                       "required": [
                         "id",
                         "createdAt",
                         "updatedAt",
-                        "userId",
-                        "name",
-                        "species",
-                        "location",
-                        "plantedDate",
-                        "notes",
-                        "metadata",
-                        "sortOrder",
-                        "observations"
+                        "user_id",
+                        "name"
                       ]
                     }
                   },
@@ -848,11 +531,11 @@
           }
         ]
       },
-      "put": {
-        "description": "Update an existing plant",
-        "summary": "Update plant",
+      "patch": {
+        "description": "Update an existing asset (partial update)",
+        "summary": "Update asset",
         "tags": [
-          "Plant"
+          "Assets"
         ],
         "parameters": [
           {
@@ -865,7 +548,7 @@
             }
           }
         ],
-        "operationId": "updatePlant",
+        "operationId": "updateAsset",
         "requestBody": {
           "description": "Body",
           "content": {
@@ -878,89 +561,26 @@
                     "minLength": 1,
                     "maxLength": 100
                   },
-                  "species": {
+                  "type": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
+                    "enum": [
+                      "server",
+                      "vm",
+                      "nas",
+                      "container",
+                      "network",
+                      "other"
+                    ]
                   },
-                  "location": {
+                  "hostname": {
                     "type": "string",
                     "maxLength": 255
                   },
-                  "plantedDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "notes": {
-                    "type": "string",
-                    "maxLength": 1000
-                  },
                   "metadata": {
                     "type": "object",
-                    "properties": {
-                      "tags": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "wateringFrequency": {
-                        "type": "string"
-                      },
-                      "lastWateredAt": {
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "sunlightLevel": {
-                        "type": "string"
-                      },
-                      "soilType": {
-                        "type": "string"
-                      },
-                      "potSizeCm": {
-                        "type": "number"
-                      },
-                      "fertilizerType": {
-                        "type": "string"
-                      },
-                      "lastFertilizedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "lastWeatherSnapshotId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "averageTempC": {
-                        "type": "number"
-                      },
-                      "averageSunshineHrs": {
-                        "type": "number"
-                      },
-                      "healthStatus": {
-                        "type": "string"
-                      },
-                      "growthStage": {
-                        "type": "string"
-                      },
-                      "heightCm": {
-                        "type": "number"
-                      },
-                      "colorTag": {
-                        "type": "string"
-                      },
-                      "imageUrl": {
-                        "type": "string",
-                        "format": "uri"
-                      },
-                      "emojiIcon": {
-                        "type": "string"
-                      },
-                      "aiInsightSummary": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
+                    "additionalProperties": {
+                      "nullable": true
+                    }
                   }
                 }
               }
@@ -990,7 +610,7 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "userId": {
+                        "user_id": {
                           "type": "string"
                         },
                         "name": {
@@ -998,110 +618,37 @@
                           "minLength": 1,
                           "maxLength": 100
                         },
-                        "species": {
+                        "type": {
                           "type": "string",
-                          "minLength": 1,
-                          "maxLength": 100
+                          "enum": [
+                            "server",
+                            "vm",
+                            "nas",
+                            "container",
+                            "network",
+                            "other"
+                          ],
+                          "nullable": true
                         },
-                        "location": {
+                        "hostname": {
                           "type": "string",
                           "maxLength": 255,
                           "nullable": true
                         },
-                        "plantedDate": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "notes": {
-                          "type": "string",
-                          "maxLength": 1000,
-                          "nullable": true
-                        },
                         "metadata": {
                           "type": "object",
-                          "properties": {
-                            "tags": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "wateringFrequency": {
-                              "type": "string"
-                            },
-                            "lastWateredAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "sunlightLevel": {
-                              "type": "string"
-                            },
-                            "soilType": {
-                              "type": "string"
-                            },
-                            "potSizeCm": {
-                              "type": "number"
-                            },
-                            "fertilizerType": {
-                              "type": "string"
-                            },
-                            "lastFertilizedAt": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "lastWeatherSnapshotId": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "averageTempC": {
-                              "type": "number"
-                            },
-                            "averageSunshineHrs": {
-                              "type": "number"
-                            },
-                            "healthStatus": {
-                              "type": "string"
-                            },
-                            "growthStage": {
-                              "type": "string"
-                            },
-                            "heightCm": {
-                              "type": "number"
-                            },
-                            "colorTag": {
-                              "type": "string"
-                            },
-                            "imageUrl": {
-                              "type": "string",
-                              "format": "uri"
-                            },
-                            "emojiIcon": {
-                              "type": "string"
-                            },
-                            "aiInsightSummary": {
-                              "type": "string"
-                            }
+                          "additionalProperties": {
+                            "nullable": true
                           },
-                          "additionalProperties": true,
                           "nullable": true
-                        },
-                        "sortOrder": {
-                          "type": "integer"
                         }
                       },
                       "required": [
                         "id",
                         "createdAt",
                         "updatedAt",
-                        "userId",
-                        "name",
-                        "species",
-                        "location",
-                        "plantedDate",
-                        "notes",
-                        "metadata",
-                        "sortOrder"
+                        "user_id",
+                        "name"
                       ]
                     }
                   },
@@ -1162,10 +709,10 @@
         ]
       },
       "delete": {
-        "description": "Delete a plant and all its observations",
-        "summary": "Delete plant",
+        "description": "Delete an asset and all its associated logs",
+        "summary": "Delete asset",
         "tags": [
-          "Plant"
+          "Assets"
         ],
         "parameters": [
           {
@@ -1178,7 +725,7 @@
             }
           }
         ],
-        "operationId": "deletePlant",
+        "operationId": "deleteAsset",
         "responses": {
           "204": {
             "description": "204",
@@ -1196,20 +743,21 @@
         ]
       }
     },
-    "/v1/observations": {
+    "/api/v1/assets/{id}/logs": {
       "get": {
-        "description": "Get all observations for the authenticated user",
-        "summary": "Get all observations",
+        "description": "Get a paginated list of logs for a specific asset",
+        "summary": "List logs for asset",
         "tags": [
-          "Observation"
+          "Logs"
         ],
         "parameters": [
           {
-            "name": "page",
-            "in": "query",
+            "name": "id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "type": "integer",
-              "minimum": 1
+              "type": "string",
+              "format": "uuid"
             }
           },
           {
@@ -1218,25 +766,66 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 200
             }
           },
           {
-            "name": "sort",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 50
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "sort_by",
             "in": "query",
             "schema": {
               "type": "string",
               "enum": [
                 "created_at",
-                "updated_at",
-                "date",
-                "height_cm",
-                "sort_order"
+                "updated_at"
               ]
             }
           },
           {
-            "name": "order",
+            "name": "sort_order",
             "in": "query",
             "schema": {
               "type": "string",
@@ -1245,17 +834,9 @@
                 "desc"
               ]
             }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
           }
         ],
-        "operationId": "getObservations",
+        "operationId": "listLogsByAsset",
         "responses": {
           "200": {
             "description": "200",
@@ -1281,39 +862,35 @@
                             "type": "string",
                             "format": "date-time"
                           },
-                          "userId": {
-                            "type": "string"
-                          },
-                          "plantId": {
+                          "asset_id": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          "date": {
+                          "user_id": {
+                            "type": "string"
+                          },
+                          "content": {
                             "type": "string",
-                            "format": "date-time"
+                            "minLength": 2,
+                            "maxLength": 10000
                           },
-                          "heightCm": {
-                            "type": "number",
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 50
+                            },
+                            "maxItems": 20,
                             "nullable": true
-                          },
-                          "notes": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "sortOrder": {
-                            "type": "integer"
                           }
                         },
                         "required": [
                           "id",
                           "createdAt",
                           "updatedAt",
-                          "userId",
-                          "plantId",
-                          "date",
-                          "heightCm",
-                          "notes",
-                          "sortOrder"
+                          "asset_id",
+                          "user_id",
+                          "content"
                         ]
                       }
                     },
@@ -1340,6 +917,27 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1349,13 +947,23 @@
         ]
       },
       "post": {
-        "description": "Create a new observation for a plant. If date is not provided, it defaults to current timestamp.",
-        "summary": "Create a new observation",
+        "description": "Create a new log entry for a specific asset",
+        "summary": "Create a new log for asset",
         "tags": [
-          "Observation"
+          "Logs"
         ],
-        "parameters": [],
-        "operationId": "createObservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "createLog",
         "requestBody": {
           "description": "Body",
           "content": {
@@ -1363,23 +971,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "plantId": {
+                  "content": {
                     "type": "string",
-                    "format": "uuid"
+                    "minLength": 2,
+                    "maxLength": 10000
                   },
-                  "date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "heightCm": {
-                    "type": "number"
-                  },
-                  "notes": {
-                    "type": "string"
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "maxItems": 20
                   }
                 },
                 "required": [
-                  "plantId"
+                  "content"
                 ]
               }
             }
@@ -1408,39 +1015,35 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "plantId": {
+                        "asset_id": {
                           "type": "string",
                           "format": "uuid"
                         },
-                        "date": {
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "content": {
                           "type": "string",
-                          "format": "date-time"
+                          "minLength": 2,
+                          "maxLength": 10000
                         },
-                        "heightCm": {
-                          "type": "number",
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "maxItems": 20,
                           "nullable": true
-                        },
-                        "notes": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "sortOrder": {
-                          "type": "integer"
                         }
                       },
                       "required": [
                         "id",
                         "createdAt",
                         "updatedAt",
-                        "userId",
-                        "plantId",
-                        "date",
-                        "heightCm",
-                        "notes",
-                        "sortOrder"
+                        "asset_id",
+                        "user_id",
+                        "content"
                       ]
                     }
                   },
@@ -1501,12 +1104,12 @@
         ]
       }
     },
-    "/v1/observations/{id}": {
+    "/api/v1/logs/{id}": {
       "get": {
-        "description": "Get a single observation by ID",
-        "summary": "Get observation by ID",
+        "description": "Get a single log entry by its ID",
+        "summary": "Get log by ID",
         "tags": [
-          "Observation"
+          "Logs"
         ],
         "parameters": [
           {
@@ -1519,7 +1122,7 @@
             }
           }
         ],
-        "operationId": "getObservationById",
+        "operationId": "getLogById",
         "responses": {
           "200": {
             "description": "200",
@@ -1543,39 +1146,35 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "plantId": {
+                        "asset_id": {
                           "type": "string",
                           "format": "uuid"
                         },
-                        "date": {
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "content": {
                           "type": "string",
-                          "format": "date-time"
+                          "minLength": 2,
+                          "maxLength": 10000
                         },
-                        "heightCm": {
-                          "type": "number",
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "maxItems": 20,
                           "nullable": true
-                        },
-                        "notes": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "sortOrder": {
-                          "type": "integer"
                         }
                       },
                       "required": [
                         "id",
                         "createdAt",
                         "updatedAt",
-                        "userId",
-                        "plantId",
-                        "date",
-                        "heightCm",
-                        "notes",
-                        "sortOrder"
+                        "asset_id",
+                        "user_id",
+                        "content"
                       ]
                     }
                   },
@@ -1614,11 +1213,11 @@
           }
         ]
       },
-      "put": {
-        "description": "Update an existing observation",
-        "summary": "Update observation",
+      "patch": {
+        "description": "Update an existing log entry (partial update)",
+        "summary": "Update log",
         "tags": [
-          "Observation"
+          "Logs"
         ],
         "parameters": [
           {
@@ -1631,7 +1230,7 @@
             }
           }
         ],
-        "operationId": "updateObservation",
+        "operationId": "updateLog",
         "requestBody": {
           "description": "Body",
           "content": {
@@ -1639,11 +1238,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "heightCm": {
-                    "type": "number"
+                  "content": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 10000
                   },
-                  "notes": {
-                    "type": "string"
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 50
+                    },
+                    "maxItems": 20,
+                    "nullable": true
                   }
                 }
               }
@@ -1673,39 +1280,35 @@
                           "type": "string",
                           "format": "date-time"
                         },
-                        "userId": {
-                          "type": "string"
-                        },
-                        "plantId": {
+                        "asset_id": {
                           "type": "string",
                           "format": "uuid"
                         },
-                        "date": {
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "content": {
                           "type": "string",
-                          "format": "date-time"
+                          "minLength": 2,
+                          "maxLength": 10000
                         },
-                        "heightCm": {
-                          "type": "number",
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "maxItems": 20,
                           "nullable": true
-                        },
-                        "notes": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "sortOrder": {
-                          "type": "integer"
                         }
                       },
                       "required": [
                         "id",
                         "createdAt",
                         "updatedAt",
-                        "userId",
-                        "plantId",
-                        "date",
-                        "heightCm",
-                        "notes",
-                        "sortOrder"
+                        "asset_id",
+                        "user_id",
+                        "content"
                       ]
                     }
                   },
@@ -1766,10 +1369,10 @@
         ]
       },
       "delete": {
-        "description": "Delete an observation",
-        "summary": "Delete observation",
+        "description": "Delete a log entry",
+        "summary": "Delete log",
         "tags": [
-          "Observation"
+          "Logs"
         ],
         "parameters": [
           {
@@ -1782,7 +1385,7 @@
             }
           }
         ],
-        "operationId": "deleteObservation",
+        "operationId": "deleteLog",
         "responses": {
           "204": {
             "description": "204",
@@ -1803,12 +1406,12 @@
   },
   "info": {
     "version": "1.0.0",
-    "title": "ark REST API - Documentation",
-    "description": "ark REST API - Documentation"
+    "title": "ARK Asset Management API",
+    "description": "REST API for ARK - A homelab asset tracking and configuration log management application. Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes."
   },
   "servers": [
     {
-      "url": "http://localhost:8080/api",
+      "url": "http://localhost:8080",
       "description": "Local Server"
     }
   ],

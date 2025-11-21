@@ -432,3 +432,33 @@ task tidy
 - Always verify schema changes in a development environment before applying to production
 - The migration file (001_ark_schema.sql) contains both UP and DOWN sections - be careful when executing with psql
 - CASCADE DELETE will automatically delete all related records - test thoroughly before using in production
+
+---
+
+# ARK-11: API Route Configuration Guidelines
+
+## Best Practices for Endpoint Setup
+
+1.  **Prefix Consistency**: Always ensure the route registration matches the intended API structure.
+    -   If using a group (e.g., `/api/v1`), register routes relative to that group.
+    -   If registering on the root echo instance, include the full path (e.g., `/api/status`).
+
+2.  **Documentation Alignment**: The implementation MUST match the OpenAPI documentation.
+    -   If OpenAPI says `/api/status`, the code must register `/api/status`.
+    -   A mismatch leads to 404 errors for clients relying on the docs.
+
+3.  **Group vs. Root Registration**:
+    -   **Versioned API Routes**: Register under the version group (e.g., `v1 := router.Group("/api/v1")`).
+    -   **System Routes**: Register on the root router but use the full path if they need to appear under `/api` (e.g., `/api/status`).
+
+## Common Mistakes to Avoid
+
+-   **Missing Prefix**: Registering `/status` when the client expects `/api/status`.
+    -   *Incorrect*: `r.GET("/status", handler)`
+    -   *Correct*: `r.GET("/api/status", handler)`
+
+-   **Group Confusion**: Registering a route on the root router that belongs in a group.
+    -   *Incorrect*: `router.GET("/users", handler)` (if it should be `/api/v1/users`)
+    -   *Correct*: `v1.GET("/users", handler)` (where `v1` is the group)
+
+-   **Implicit Paths**: Assuming a handler knows its own path. The router defines the path, not the handler.

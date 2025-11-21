@@ -1,14 +1,16 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
 
+	"ark/internal/errs"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"ark/internal/errs"
 )
 
 type Validatable interface {
@@ -111,4 +113,48 @@ var uuidRegex = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4
 
 func IsValidUUID(uuid string) bool {
 	return uuidRegex.MatchString(uuid)
+}
+
+// ValidateAssetType validates that the asset type is one of the allowed values
+func ValidateAssetType(typeStr *string) error {
+	if typeStr == nil {
+		return nil
+	}
+
+	validTypes := map[string]bool{
+		"server":    true,
+		"vm":        true,
+		"nas":       true,
+		"container": true,
+		"network":   true,
+		"other":     true,
+	}
+
+	if !validTypes[*typeStr] {
+		return errs.NewBadRequestError(fmt.Sprintf("invalid asset type: %s", *typeStr), false, nil, nil, nil)
+	}
+	return nil
+}
+
+// ValidateMetadataJSON validates that the metadata is a valid JSON object
+func ValidateMetadataJSON(metadata *json.RawMessage) error {
+	if metadata == nil {
+		return nil
+	}
+
+	// Check if it's valid JSON
+	if !json.Valid(*metadata) {
+		return errs.NewBadRequestError("metadata must be valid JSON", false, nil, nil, nil)
+	}
+
+	// Check if it's an object (starts with {)
+	str := string(*metadata)
+	if strings.TrimSpace(str) == "" {
+		return nil
+	}
+	if !strings.HasPrefix(strings.TrimSpace(str), "{") {
+		return errs.NewBadRequestError("metadata must be a JSON object", false, nil, nil, nil)
+	}
+
+	return nil
 }

@@ -1,30 +1,36 @@
-# Go Arc
+# Ark
 
-A production-ready monorepo template for building scalable web applications with Go backend and TypeScript frontend. Built with modern best practices, clean architecture, and comprehensive tooling.
+A production-ready monorepo for homelab asset tracking and configuration log management with AI-powered search. Built with Go backend and TypeScript frontend using modern best practices and clean architecture.
 
 ## Features
 
 - **Monorepo Structure**: Organized with Turborepo for efficient builds and development
-- **Go Backend**: High-performance REST API with Echo framework
+- **Go Backend**: High-performance REST API with Echo framework for asset and log management
+- **AI-Powered Search**: Natural language querying of configuration logs (planned)
 - **Authentication**: Integrated Clerk SDK for secure user management
-- **Database**: PostgreSQL with migrations and connection pooling
+- **Database**: PostgreSQL with full-text search, migrations, and connection pooling
 - **Background Jobs**: Redis-based async job processing with Asynq
 - **Observability**: New Relic APM integration and structured logging
 - **Email Service**: Transactional emails with Resend and HTML templates
-- **Testing**: Comprehensive test infrastructure with Testcontainers
+- **Testing**: Comprehensive test infrastructure
 - **API Documentation**: OpenAPI/Swagger specification
 - **Security**: Rate limiting, CORS, secure headers, and JWT validation
 
 ## Project Structure
 
 ```
-gardenjournal/
-├── apps/backend/          # Go backend application
-├── packages/         # Frontend packages (React, Vue, etc.)
-├── package.json      # Monorepo configuration
-├── turbo.json        # Turborepo configuration
-└── README.md         # This file
+ark/
+├── apps/
+│   ├── backend/          # Go backend application
+│   └── frontend/         # React frontend (in progress)
+├── packages/             # Shared packages
+├── package.json          # Monorepo configuration
+├── turbo.json            # Turborepo configuration
+└── README.md             # This file
 ```
+## OpenApi Documentation 
+<img width="1507" height="826" alt="image" src="https://github.com/user-attachments/assets/5875e4a9-1f9d-45e6-81a9-8d0e3a6e23ac" />
+
 
 ## Quick Start
 
@@ -39,8 +45,8 @@ gardenjournal/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/sriniously/gardenjournal.git
-cd gardenjournal
+git clone https://github.com/yourusername/ark.git
+cd ark
 ```
 
 2. Install dependencies:
@@ -61,29 +67,17 @@ cp apps/backend/.env.example apps/backend/.env
 
 4. Start PostgreSQL and Redis:
 ```bash
-# Option 1: Using Docker Compose (recommended)
-docker-compose up -d postgres redis
-
-# Option 2: Using Docker directly
-docker run -d --name gardenjournal-postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=gardenjournal \
-  -p 5432:5432 \
-  postgres:16
-
-docker run -d --name gardenjournal-redis \
-  -p 6379:6379 \
-  redis:8-alpine
-
-# Option 3: Using local installations
-# PostgreSQL (if installed locally)
+# PostgreSQL (local installation required)
 brew services start postgresql@16  # macOS
 sudo systemctl start postgresql    # Linux
 
-# Redis (if installed locally)
+# Redis (local installation required)
 brew services start redis           # macOS
 sudo systemctl start redis          # Linux
 ```
+
+> [!NOTE]
+> Docker and Docker Compose are not yet configured for this project. You'll need to install PostgreSQL 16+ and Redis 8+ locally.
 
 5. Run database migrations:
 ```bash
@@ -124,20 +118,21 @@ bun lint               # Lint all packages
 
 ### Environment Variables
 
-The backend uses environment variables prefixed with `gardenjournal_`. Key variables include:
+The backend uses environment variables prefixed with `ARK_`. Key variables include:
 
-- `gardenjournal_DATABASE_*` - PostgreSQL connection settings
-- `gardenjournal_SERVER_*` - Server configuration
-- `gardenjournal_AUTH_*` - Authentication settings
-- `gardenjournal_REDIS_*` - Redis connection
-- `gardenjournal_EMAIL_*` - Email service configuration
-- `gardenjournal_OBSERVABILITY_*` - Monitoring settings
+- `ARK_DATABASE_*` - PostgreSQL connection settings
+- `ARK_SERVER_*` - Server configuration
+- `ARK_AUTH_*` - Authentication settings (Clerk)
+- `ARK_REDIS_*` - Redis connection
+- `ARK_INTEGRATION_*` - Email service configuration (Resend)
+- `ARK_OBSERVABILITY_*` - Monitoring settings (New Relic)
+- `ARK_OPENAI_*` - OpenAI API configuration (for AI features)
 
 See `apps/backend/.env.example` for a complete list.
 
 ## Architecture
 
-This gardenjournal follows clean architecture principles:
+This project follows clean architecture principles:
 
 - **Handlers**: HTTP request/response handling
 - **Services**: Business logic implementation
@@ -155,7 +150,7 @@ go test ./...
 # Run with coverage
 go test -cover ./...
 
-# Run integration tests (requires Docker)
+# Run integration tests
 go test -tags=integration ./...
 ```
 
@@ -196,19 +191,7 @@ task migrations:goto version=001
 ### Redis Management
 
 ```bash
-# Start Redis (Docker)
-docker start gardenjournal-redis
-
-# Stop Redis (Docker)
-docker stop gardenjournal-redis
-
-# View Redis logs
-docker logs -f gardenjournal-redis
-
-# Connect to Redis CLI
-docker exec -it gardenjournal-redis redis-cli
-
-# Or if Redis is installed locally
+# Connect to Redis CLI (local installation)
 redis-cli
 
 # Common Redis CLI commands
@@ -274,21 +257,12 @@ bun dev
 ```bash
 # Build all packages from root
 bun build
-
 # Build backend binary
 cd apps/backend
-go build -o bin/gardenjournal ./cmd/gardenjournal
+go build -o bin/ark ./cmd/ark
 
 # Build with optimizations
-go build -ldflags="-s -w" -o bin/gardenjournal ./cmd/gardenjournal
-
-# Build Zod package
-cd packages/zod
-bun run build
-
-# Build OpenAPI package
-cd packages/openapi
-bun run build
+go build -ldflags="-s -w" -o bin/ark ./cmd/ark
 ```
 
 ### Testing
@@ -372,34 +346,20 @@ cd ../openapi && bun run build
 cd apps/backend
 task migrations:down  # Roll back all migrations
 task migrations:up    # Reapply migrations
-
 # Check Redis connection
 redis-cli ping
-# or for Docker
-docker exec -it gardenjournal-redis redis-cli ping
 
 # Clear Redis cache
 redis-cli FLUSHDB
-# or for Docker
-docker exec -it gardenjournal-redis redis-cli FLUSHDB
 
 # Check PostgreSQL connection
-psql -h localhost -U postgres -d gardenjournal -c "SELECT 1;"
-# or for Docker
-docker exec -it gardenjournal-postgres psql -U postgres -d gardenjournal -c "SELECT 1;"
+psql -h localhost -U postgres -d ark -c "SELECT 1;"
 
-# View Redis and PostgreSQL container status
-docker ps | grep gardenjournal
-
-# Restart Redis
-docker restart gardenjournal-redis
-# or local
+# Restart Redis (local)
 brew services restart redis  # macOS
 sudo systemctl restart redis # Linux
 
-# Restart PostgreSQL
-docker restart gardenjournal-postgres
-# or local
+# Restart PostgreSQL (local)
 brew services restart postgresql@16  # macOS
 sudo systemctl restart postgresql    # Linux
 ```
@@ -407,20 +367,12 @@ sudo systemctl restart postgresql    # Linux
 ### Useful Development Tips
 
 ```bash
-# Watch OpenAPI changes and regenerate
-cd packages/openapi
-bun run gen:watch  # If available
-
 # Check Go module dependencies
 cd apps/backend
 go mod graph
 
 # View available tasks
 task help
-
-# Check API routes
-cd apps/backend
-go run cmd/gardenjournal/main.go --routes  # If implemented
 ```
 
 ## Contributing

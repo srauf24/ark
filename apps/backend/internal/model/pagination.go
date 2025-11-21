@@ -21,10 +21,14 @@ type PaginationParams struct {
 
 // SetDefaults sets default values for pagination parameters
 // If Limit is 0, it sets it to the provided defaultLimit
+// If Limit exceeds 100, it caps it at 100
 // If Offset is negative, it sets it to 0
 func (p *PaginationParams) SetDefaults(defaultLimit int) {
 	if p.Limit == 0 {
 		p.Limit = defaultLimit
+	}
+	if p.Limit > 100 {
+		p.Limit = 100
 	}
 	if p.Offset < 0 {
 		p.Offset = 0

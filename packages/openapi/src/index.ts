@@ -26,8 +26,8 @@ const operationMapper: OperationMapper = (operation, appRoute) => ({
   ...operation,
   ...(hasSecurity(appRoute.metadata)
     ? {
-        security: appRoute.metadata.openApiSecurity,
-      }
+      security: appRoute.metadata.openApiSecurity,
+    }
     : {}),
 });
 
@@ -38,8 +38,8 @@ export const OpenAPI = Object.assign(
       openapi: "3.0.2",
       info: {
         version: "1.0.0",
-        title: "gardenjournal REST API - Documentation",
-        description: "gardenjournal REST API - Documentation",
+        title: "ARK Asset Management API",
+        description: "REST API for ARK - A homelab asset tracking and configuration log management application. Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes.",
       },
       servers: [
         {

@@ -1,6 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
-import { ZHealthResponse } from "@gardenjournal/zod";
+import { ZHealthResponse } from "@ark/zod";
 import { getSecurityMetadata } from "@/utils.js";
 
 const c = initContract();
@@ -8,7 +8,7 @@ const c = initContract();
 export const healthContract = c.router({
   getHealth: {
     summary: "Get health",
-    path: "/status",
+    path: "/api/status",
     method: "GET",
     description: "Get health status",
     responses: {

@@ -11,7 +11,8 @@ type AuthService struct {
 }
 
 func NewAuthService(s *server.Server) *AuthService {
-	clerk.SetKey(s.Config.Auth.SecretKey)
+	// Initialize Clerk SDK with the Clerk-specific secret key
+	clerk.SetKey(s.Config.Auth.Clerk.SecretKey)
 	return &AuthService{
 		server: s,
 	}

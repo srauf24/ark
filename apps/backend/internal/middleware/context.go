@@ -3,11 +3,12 @@ package middleware
 import (
 	"context"
 
+	"ark/internal/logger"
+	"ark/internal/server"
+
 	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/zerolog"
-	"ark/internal/logger"
-	"ark/internal/server"
 )
 
 const (
@@ -85,6 +86,16 @@ func GetUserID(c echo.Context) string {
 		return userID
 	}
 	return ""
+}
+
+// GetUserIDOrError extracts user_id from context and returns an error if not found
+// This is used by handlers that require authentication
+func GetUserIDOrError(c echo.Context) (string, error) {
+	userID := GetUserID(c)
+	if userID == "" {
+		return "", echo.NewHTTPError(401, "unauthorized: user not authenticated")
+	}
+	return userID, nil
 }
 
 func GetLogger(c echo.Context) *zerolog.Logger {
