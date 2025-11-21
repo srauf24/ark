@@ -14,8 +14,8 @@
       "version": "0.0.0",
       "dependencies": {
         "@ark/openapi": "workspace:*",
+        "@ark/zod": "workspace:*",
         "@clerk/clerk-react": "^5.38.1",
-        "@gardenjournal/zod": "workspace:*",
         "@hookform/resolvers": "^5.2.1",
         "@tailwindcss/vite": "^4.1.11",
         "@tanstack/react-query": "^5.84.1",
@@ -72,7 +72,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@anatine/zod-openapi": "^2.2.7",
-        "@gardenjournal/zod": "workspace:*",
+        "@ark/zod": "workspace:*",
         "@ts-rest/core": "^3.52.1",
         "@ts-rest/open-api": "^3.52.1",
         "ts-pattern": "^5.7.0",
@@ -88,7 +88,7 @@
       },
     },
     "packages/zod": {
-      "name": "@gardenjournal/zod",
+      "name": "@ark/zod",
       "version": "1.0.0",
       "dependencies": {
         "@anatine/zod-openapi": "^2.2.7",
@@ -105,6 +105,8 @@
     "@anatine/zod-openapi": ["@anatine/zod-openapi@2.2.8", "", { "dependencies": { "ts-deepmerge": "^6.0.3" }, "peerDependencies": { "openapi3-ts": "^4.1.2", "zod": "^3.20.0" } }, "sha512-iyM8mB556KdiZ6a1GTZ67ACLnJakU1hrzzXoh7PLaReldAdMq88MlZn/Ir/U56/TBuQctBhh/4seo0b0B343uw=="],
 
     "@ark/openapi": ["@ark/openapi@workspace:packages/openapi"],
+
+    "@ark/zod": ["@ark/zod@workspace:packages/zod"],
 
     "@babel/code-frame": ["@babel/code-frame@7.27.1", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.27.1", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg=="],
 
@@ -223,8 +225,6 @@
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.0", "", { "dependencies": { "@eslint/core": "^0.16.0", "levn": "^0.4.1" } }, "sha512-sB5uyeq+dwCWyPi31B2gQlVlo+j5brPlWx4yZBrEaRo/nhdDE8Xke1gsGgtiBdaBTxuTkceLVuVt/pclrasb0A=="],
 
     "@gardenjournal/emails": ["@gardenjournal/emails@workspace:packages/emails"],
-
-    "@gardenjournal/zod": ["@gardenjournal/zod@workspace:packages/zod"],
 
     "@hapi/address": ["@hapi/address@5.1.1", "", { "dependencies": { "@hapi/hoek": "^11.0.2" } }, "sha512-A+po2d/dVoY7cYajycYI43ZbYMXukuopIsqCjh5QzsBCipDtdofHntljDlpccMjIfTy6UOkg+5KPriwYch2bXA=="],
 

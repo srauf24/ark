@@ -172,7 +172,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "assets": {
+                    "data": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -232,20 +232,24 @@
                       }
                     },
                     "total": {
-                      "type": "integer"
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
                     },
                     "limit": {
-                      "type": "integer"
+                      "type": "number"
                     },
-                    "offset": {
-                      "type": "integer"
+                    "totalPages": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "assets",
+                    "data",
                     "total",
+                    "page",
                     "limit",
-                    "offset"
+                    "totalPages"
                   ]
                 }
               }
@@ -260,7 +264,7 @@
       },
       "post": {
         "description": "Create a new asset for the authenticated user",
-        "summary": "Create asset",
+        "summary": "Create a new asset",
         "tags": [
           "Assets"
         ],
@@ -315,57 +319,65 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "user_id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 100
-                    },
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "server",
-                        "vm",
-                        "nas",
-                        "container",
-                        "network",
-                        "other"
-                      ],
-                      "nullable": true
-                    },
-                    "hostname": {
-                      "type": "string",
-                      "maxLength": 255,
-                      "nullable": true
-                    },
-                    "metadata": {
+                    "data": {
                       "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "server",
+                            "vm",
+                            "nas",
+                            "container",
+                            "network",
+                            "other"
+                          ],
+                          "nullable": true
+                        },
+                        "hostname": {
+                          "type": "string",
+                          "maxLength": 255,
+                          "nullable": true
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          },
+                          "nullable": true
+                        }
                       },
-                      "nullable": true
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "user_id",
+                        "name"
+                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "user_id",
-                    "name"
+                    "data"
                   ]
                 }
               }
@@ -427,57 +439,65 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "user_id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 100
-                    },
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "server",
-                        "vm",
-                        "nas",
-                        "container",
-                        "network",
-                        "other"
-                      ],
-                      "nullable": true
-                    },
-                    "hostname": {
-                      "type": "string",
-                      "maxLength": 255,
-                      "nullable": true
-                    },
-                    "metadata": {
+                    "data": {
                       "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "server",
+                            "vm",
+                            "nas",
+                            "container",
+                            "network",
+                            "other"
+                          ],
+                          "nullable": true
+                        },
+                        "hostname": {
+                          "type": "string",
+                          "maxLength": 255,
+                          "nullable": true
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          },
+                          "nullable": true
+                        }
                       },
-                      "nullable": true
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "user_id",
+                        "name"
+                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "user_id",
-                    "name"
+                    "data"
                   ]
                 }
               }
@@ -575,57 +595,65 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "user_id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 100
-                    },
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "server",
-                        "vm",
-                        "nas",
-                        "container",
-                        "network",
-                        "other"
-                      ],
-                      "nullable": true
-                    },
-                    "hostname": {
-                      "type": "string",
-                      "maxLength": 255,
-                      "nullable": true
-                    },
-                    "metadata": {
+                    "data": {
                       "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "server",
+                            "vm",
+                            "nas",
+                            "container",
+                            "network",
+                            "other"
+                          ],
+                          "nullable": true
+                        },
+                        "hostname": {
+                          "type": "string",
+                          "maxLength": 255,
+                          "nullable": true
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "nullable": true
+                          },
+                          "nullable": true
+                        }
                       },
-                      "nullable": true
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "user_id",
+                        "name"
+                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "user_id",
-                    "name"
+                    "data"
                   ]
                 }
               }
@@ -817,7 +845,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "logs": {
+                    "data": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -867,20 +895,24 @@
                       }
                     },
                     "total": {
-                      "type": "integer"
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
                     },
                     "limit": {
-                      "type": "integer"
+                      "type": "number"
                     },
-                    "offset": {
-                      "type": "integer"
+                    "totalPages": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "logs",
+                    "data",
                     "total",
+                    "page",
                     "limit",
-                    "offset"
+                    "totalPages"
                   ]
                 }
               }
@@ -916,7 +948,7 @@
       },
       "post": {
         "description": "Create a new log entry for a specific asset",
-        "summary": "Create log for asset",
+        "summary": "Create a new log for asset",
         "tags": [
           "Logs"
         ],
@@ -926,7 +958,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -967,47 +1000,55 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "asset_id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "user_id": {
-                      "type": "string"
-                    },
-                    "content": {
-                      "type": "string",
-                      "minLength": 2,
-                      "maxLength": 10000
-                    },
-                    "tags": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "maxLength": 50
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "asset_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 10000
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "maxItems": 20,
+                          "nullable": true
+                        }
                       },
-                      "maxItems": 20,
-                      "nullable": true
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "asset_id",
+                        "user_id",
+                        "content"
+                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "asset_id",
-                    "user_id",
-                    "content"
+                    "data"
                   ]
                 }
               }
@@ -1076,7 +1117,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1089,47 +1131,55 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "asset_id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "user_id": {
-                      "type": "string"
-                    },
-                    "content": {
-                      "type": "string",
-                      "minLength": 2,
-                      "maxLength": 10000
-                    },
-                    "tags": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "maxLength": 50
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "asset_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 10000
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "maxItems": 20,
+                          "nullable": true
+                        }
                       },
-                      "maxItems": 20,
-                      "nullable": true
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "asset_id",
+                        "user_id",
+                        "content"
+                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "asset_id",
-                    "user_id",
-                    "content"
+                    "data"
                   ]
                 }
               }
@@ -1175,7 +1225,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1214,47 +1265,55 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "asset_id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "user_id": {
-                      "type": "string"
-                    },
-                    "content": {
-                      "type": "string",
-                      "minLength": 2,
-                      "maxLength": 10000
-                    },
-                    "tags": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "maxLength": 50
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "asset_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 10000
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 50
+                          },
+                          "maxItems": 20,
+                          "nullable": true
+                        }
                       },
-                      "maxItems": 20,
-                      "nullable": true
+                      "required": [
+                        "id",
+                        "createdAt",
+                        "updatedAt",
+                        "asset_id",
+                        "user_id",
+                        "content"
+                      ]
                     }
                   },
                   "required": [
-                    "id",
-                    "createdAt",
-                    "updatedAt",
-                    "asset_id",
-                    "user_id",
-                    "content"
+                    "data"
                   ]
                 }
               }
@@ -1321,7 +1380,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],

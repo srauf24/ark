@@ -5,8 +5,8 @@ import {
     ZUpdateAssetRequest,
     ZErrorResponse,
     ZUuid,
-} from "@gardenjournal/zod";
-import { schemaWithPagination } from "@gardenjournal/zod";
+} from "@ark/zod";
+import { schemaWithPagination } from "@ark/zod";
 import { initContract } from "@ts-rest/core";
 import z from "zod";
 
