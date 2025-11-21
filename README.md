@@ -29,7 +29,7 @@ ark/
 └── README.md             # This file
 ```
 ## OpenApi Documentation 
-<img width="1512" height="834" alt="image" src="https://github.com/user-attachments/assets/b95d92ab-72c9-47ce-943e-7de22f90492b" />
+<img width="1507" height="826" alt="image" src="https://github.com/user-attachments/assets/5875e4a9-1f9d-45e6-81a9-8d0e3a6e23ac" />
 
 
 ## Quick Start
