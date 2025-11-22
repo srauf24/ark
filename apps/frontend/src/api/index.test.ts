@@ -1,78 +1,70 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock dependencies BEFORE importing the module under test
-vi.mock("@clerk/clerk-react");
-vi.mock("@/config/env.ts");
-vi.mock("axios");
+const mockGetToken = vi.fn().mockResolvedValue("mock-token");
 
-import { useAuth } from "@clerk/clerk-react";
+vi.mock("@clerk/clerk-react", () => ({
+    useAuth: () => ({
+        getToken: mockGetToken,
+        isSignedIn: true,
+        isLoaded: true,
+    }),
+}));
+
+vi.mock("@/config/env.ts", () => ({
+    API_URL: "http://localhost:8080",
+}));
+
+vi.mock("axios", () => ({
+    default: {
+        request: vi.fn(),
+    },
+    isAxiosError: vi.fn(),
+}));
+
 import { useApiClient } from "./index";
 
 describe("useApiClient", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        // Setup default mock implementation
-        vi.mocked(useAuth).mockReturnValue({
-            getToken: vi.fn().mockResolvedValue("mock-token"),
-            isSignedIn: true,
-            isLoaded: true,
-        } as any);
-    });
-
     it("should return a client object", () => {
-        const { result } = renderHook(() => useApiClient());
+        const client = useApiClient();
 
-        expect(result.current).toBeDefined();
-        expect(typeof result.current).toBe("object");
+        expect(client).toBeDefined();
+        expect(typeof client).toBe("object");
     });
 
     it("should have Assets property with methods", () => {
-        const { result } = renderHook(() => useApiClient());
+        const client = useApiClient();
 
-        expect(result.current.Assets).toBeDefined();
-        expect(result.current.Assets.listAssets).toBeDefined();
-        expect(result.current.Assets.createAsset).toBeDefined();
-        expect(result.current.Assets.getAssetById).toBeDefined();
-        expect(result.current.Assets.updateAsset).toBeDefined();
-        expect(result.current.Assets.deleteAsset).toBeDefined();
+        expect(client.Assets).toBeDefined();
+        expect(client.Assets.listAssets).toBeDefined();
+        expect(client.Assets.createAsset).toBeDefined();
+        expect(client.Assets.getAssetById).toBeDefined();
+        expect(client.Assets.updateAsset).toBeDefined();
+        expect(client.Assets.deleteAsset).toBeDefined();
     });
 
     it("should have Logs property with methods", () => {
-        const { result } = renderHook(() => useApiClient());
+        const client = useApiClient();
 
-        expect(result.current.Logs).toBeDefined();
-        expect(result.current.Logs.listLogsByAsset).toBeDefined();
-        expect(result.current.Logs.createLog).toBeDefined();
-        expect(result.current.Logs.getLogById).toBeDefined();
-        expect(result.current.Logs.updateLog).toBeDefined();
-        expect(result.current.Logs.deleteLog).toBeDefined();
-    });
-
-    it("should call getToken with custom template", async () => {
-        const mockGetToken = vi.fn().mockResolvedValue("mock-token");
-        vi.mocked(useAuth).mockReturnValue({
-            getToken: mockGetToken,
-            isSignedIn: true,
-            isLoaded: true,
-        } as any);
-
-        const { result } = renderHook(() => useApiClient());
-
-        // Verify client was created successfully
-        expect(result.current).toBeDefined();
-        expect(mockGetToken).toBeDefined();
+        expect(client.Logs).toBeDefined();
+        expect(client.Logs.listLogsByAsset).toBeDefined();
+        expect(client.Logs.createLog).toBeDefined();
+        expect(client.Logs.getLogById).toBeDefined();
+        expect(client.Logs.updateLog).toBeDefined();
+        expect(client.Logs.deleteLog).toBeDefined();
     });
 
     it("should support isBlob parameter", () => {
-        const { result } = renderHook(() => useApiClient({ isBlob: true }));
+        const client = useApiClient({ isBlob: true });
 
-        expect(result.current).toBeDefined();
+        expect(client).toBeDefined();
+        expect(client.Assets).toBeDefined();
     });
 
     it("should work without isBlob parameter (default)", () => {
-        const { result } = renderHook(() => useApiClient());
+        const client = useApiClient();
 
-        expect(result.current).toBeDefined();
+        expect(client).toBeDefined();
+        expect(client.Assets).toBeDefined();
     });
 });
