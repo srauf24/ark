@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -15,11 +15,21 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@gardenjournal/openapi": path.resolve(
+      "@ark/openapi": path.resolve(
         __dirname,
         "../../packages/openapi/src"
       ),
-      "@gardenjournal/zod": path.resolve(__dirname, "../../packages/zod/src"),
+      "@ark/zod": path.resolve(__dirname, "../../packages/zod/src"),
+    },
+  },
+  test: {
+    globals: true,
+    environment: "happy-dom",
+    setupFiles: ["./src/test/setup.ts"],
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@ark/openapi": path.resolve(__dirname, "../../packages/openapi/dist"),
+      "@ark/zod": path.resolve(__dirname, "../../packages/zod/dist"),
     },
   },
 });

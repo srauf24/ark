@@ -8,17 +8,31 @@ const envVarsSchema = z.object({
   VITE_ENV: z.enum(["production", "development", "local"]).default("local"),
 });
 
-const parseResult = envVarsSchema.safeParse(process.env);
+// In test environment, use mock values
+const isTest = typeof process !== "undefined" && process.env.NODE_ENV === "test";
 
-if (!parseResult.success) {
-  console.error(
-    "❌ Invalid environment variables:",
-    z.treeifyError(parseResult.error),
-  );
-  throw new Error("Invalid environment variables");
+let envVars: z.infer<typeof envVarsSchema>;
+
+if (isTest) {
+  // Provide test defaults
+  envVars = {
+    VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_mock_key",
+    VITE_API_URL: process.env.VITE_API_URL || "http://localhost:8080",
+    VITE_ENV: "local" as const,
+  };
+} else {
+  const parseResult = envVarsSchema.safeParse(process.env);
+
+  if (!parseResult.success) {
+    console.error(
+      "❌ Invalid environment variables:",
+      z.treeifyError(parseResult.error),
+    );
+    throw new Error("Invalid environment variables");
+  }
+
+  envVars = parseResult.data;
 }
-
-const envVars = parseResult.data;
 
 // export individual variables
 export const ENV = envVars.VITE_ENV;
