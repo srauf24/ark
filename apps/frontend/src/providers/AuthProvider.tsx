@@ -12,7 +12,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // When user is signed in, ensure token is available
         // This is primarily for debugging and ensuring Clerk is ready
         if (isSignedIn) {
-            getToken({ template: "custom" }).catch((error) => {
+            getToken({ template: "api-test" }).catch((error) => {
                 console.error("Failed to get auth token:", error);
             });
         }
