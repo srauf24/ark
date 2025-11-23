@@ -50,6 +50,34 @@ bun typecheck
 bun clean
 ```
 
+### Frontend (from apps/frontend directory)
+```bash
+# Start development server
+bun dev
+
+# Build for production
+bun build
+
+# Testing
+bun test              # Run unit/component tests (Vitest)
+bun test:e2e          # Run E2E tests (Playwright, headless)
+bun test:e2e:ui       # Run E2E tests (Playwright UI mode)
+bun test:e2e:debug    # Run E2E tests (Playwright debug mode)
+bun test:e2e:report   # View E2E test report
+
+# Linting and formatting
+bun lint              # Check for linting issues
+bun lint:fix          # Auto-fix linting issues
+bun format            # Check formatting
+bun format:fix        # Auto-fix formatting
+
+# Type checking
+bun typecheck
+
+# Clean build artifacts
+bun clean
+```
+
 ### Backend (from apps/backend directory)
 ```bash
 # Run the application
@@ -80,7 +108,9 @@ task tidy
 task help
 ```
 
-### OpenAPI Documentation (from packages/openapi)
+### Shared Packages
+
+#### OpenAPI Package (from packages/openapi)
 ```bash
 # Generate OpenAPI specification (outputs to apps/backend/static/openapi.json)
 bun run gen
@@ -88,6 +118,14 @@ bun run gen
 # Build TypeScript contracts
 bun run build
 ```
+
+#### Zod Package (from packages/zod)
+```bash
+# Build shared Zod schemas and TypeScript types
+bun run build
+```
+
+**Important**: The frontend dev server waits for OpenAPI contracts to build before starting (`wait-on ../../packages/openapi/dist/index.js`). If the frontend won't start, ensure packages are built first.
 
 ## Backend Architecture
 
@@ -432,7 +470,187 @@ go test ./... -short
 - Use environment variables for all secrets
 - API keys, JWT secrets, database passwords in env vars only
 
+## Frontend Architecture
+
+### Tech Stack
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Strict mode enabled for type safety
+- **Vite 7**: Ultra-fast build tool and dev server
+- **TailwindCSS v4**: Utility-first CSS with Vite plugin
+- **Clerk**: Authentication provider (`@clerk/clerk-react`)
+- **TanStack Query**: Server state management and data fetching
+- **React Router v7**: Client-side routing
+- **ts-rest**: Type-safe API client from OpenAPI contracts
+- **shadcn/ui**: Accessible component library (New York style, Lucide icons)
+- **Playwright**: E2E testing framework
+
+### Environment Variables (Frontend)
+
+**Critical**: Vite has special handling for environment variables:
+
+1. **Only variables prefixed with `VITE_` are exposed to the browser**
+   - This prevents accidental exposure of server secrets
+   - Example: `VITE_API_URL`, `VITE_CLERK_PUBLISHABLE_KEY`
+
+2. **Access via `import.meta.env`, NOT `process.env`**
+   - `process.env` is Node.js only and will cause `ReferenceError` in browser
+   - Use `import.meta.env.VITE_API_URL` in frontend code
+
+3. **Environment files loaded by Vite**:
+   - `.env.local` (loaded in development, gitignored)
+   - `.env.development` (loaded in development)
+   - `.env.production` (loaded in production)
+   - Plain `.env` files are NOT automatically loaded in dev mode
+
+4. **Always restart `bun dev` after changing `.env` files**
+
+**Required Frontend Variables** (in `.env.local`):
+```bash
+# Clerk Authentication (PUBLISHABLE key, not secret!)
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+
+# Backend API URL
+VITE_API_URL=http://localhost:8080
+
+# Environment
+VITE_ENV=local  # or "development" | "production"
+```
+
+**Common Mistake**: Using Clerk Secret Key (`sk_test_...`) in frontend instead of Publishable Key (`pk_test_...`). The secret key is BACKEND ONLY.
+
+### Type-Safe API Client
+
+The frontend uses ts-rest to create a fully type-safe API client from backend contracts:
+
+```typescript
+import { useApiClient } from "@/api";
+
+function MyComponent() {
+  const apiClient = useApiClient();
+
+  // Fully typed API call - response types inferred from backend
+  const response = await apiClient.assets.getAll({
+    query: { page: 1, limit: 10 }
+  });
+
+  if (response.status === 200) {
+    // response.body.data is typed as Asset[]
+    const assets = response.body.data;
+  }
+}
+```
+
+**Features**:
+- Automatic JWT injection from Clerk (`Authorization: Bearer <token>`)
+- Custom JWT template named "custom" (configured in Clerk dashboard)
+- Retry logic for 401 errors (up to 2 retries for token refresh)
+- Support for blob responses (file downloads)
+- Full type safety from backend contracts
+
+### Frontend Testing
+
+#### Unit/Component Tests (Vitest)
+```bash
+bun test              # Run all tests
+bun test --watch      # Watch mode
+bun test --coverage   # Coverage report
+```
+
+**Testing setup**:
+- Vitest as test runner (Vite-native)
+- @testing-library/react for component testing
+- happy-dom for DOM simulation
+- Mock API calls using TanStack Query testing utilities
+
+#### E2E Tests (Playwright)
+```bash
+bun test:e2e          # Headless mode (CI)
+bun test:e2e:ui       # Interactive UI mode
+bun test:e2e:debug    # Step-through debugging
+bun test:e2e:report   # View HTML report
+```
+
+**Playwright configuration** (`playwright.config.ts`):
+- Tests in `e2e/` directory
+- Runs on Chromium, Firefox, and WebKit
+- Automatic dev server startup (port 3000)
+- Parallel execution enabled
+- Screenshots on failure
+- Traces on first retry
+
+**Writing E2E tests**:
+```typescript
+import { test, expect } from "@playwright/test";
+
+test("should authenticate and view assets", async ({ page }) => {
+  await page.goto("/");
+
+  // Use semantic selectors (role, label, text)
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  // Assertions
+  await expect(page.getByRole("heading", { name: "Assets" })).toBeVisible();
+});
+```
+
 ## Troubleshooting
+
+### Frontend won't start or shows blank page
+
+**Check 1: Environment variables**
+```bash
+# Ensure .env.local exists and has required variables
+cat apps/frontend/.env.local
+
+# Should contain:
+# VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+# VITE_API_URL=http://localhost:8080
+# VITE_ENV=local
+
+# After changes, always restart:
+bun dev
+```
+
+**Check 2: Browser console errors**
+- Open DevTools (F12) → Console
+- `ReferenceError: process is not defined` → Using `process.env` instead of `import.meta.env`
+- `Invalid environment variables` → Missing or incorrect `.env.local`
+
+**Check 3: OpenAPI contracts**
+```bash
+# Rebuild contracts if needed
+cd packages/openapi && bun run build
+cd packages/zod && bun run build
+```
+
+### Clerk authentication errors
+
+**Invalid publishable key**:
+```bash
+# Verify you're using pk_test_... (publishable) not sk_test_... (secret)
+echo $VITE_CLERK_PUBLISHABLE_KEY
+
+# Get token in browser console to test:
+await window.Clerk.session.getToken({ template: "custom" })
+```
+
+**Backend JWT verification fails**:
+- Ensure backend has matching Clerk configuration
+- Check `ARK_AUTH.CLERK.SECRET_KEY` (backend) matches your Clerk app
+- Check `ARK_AUTH.CLERK.JWT_ISSUER` matches Clerk issuer
+- JWT template name must match on both sides (currently "custom", migrating to "api-test")
+
+### TypeScript errors after backend changes
+
+```bash
+# Rebuild shared packages
+cd packages/zod && bun run build
+cd ../openapi && bun run build
+
+# Type check frontend
+cd ../apps/frontend
+bun typecheck
+```
 
 ### Port already in use
 ```bash
@@ -482,6 +700,23 @@ rm -rf node_modules bun.lockb
 bun install
 ```
 
+## Known Issues & Legacy References
+
+### Package Naming Inconsistency
+
+The monorepo was migrated from `garden_journal` to `ark`, but some legacy references remain:
+
+**Root `package.json`**:
+- Still shows `"name": "gardenjournal"` (line 2)
+- Should be updated to `"name": "ark"` to match the project
+
+**Frontend Vite Config** (`apps/frontend/vite.config.ts`):
+- Contains legacy aliases: `@gardenjournal/openapi`, `@gardenjournal/zod`
+- `package.json` correctly uses `@ark/openapi` and `@ark/zod`
+- **Action needed**: Update vite.config.ts aliases to match package.json dependencies
+
+These inconsistencies don't currently break functionality but should be addressed for clarity.
+
 ## Migration History
 
 **Note**: This project was migrated from `garden_journal` codebase. All plant/observation domain code has been replaced with asset/log equivalents. Module name is now `ark`, database name is `ark`.
@@ -509,5 +744,6 @@ bun install
 - **Redis**: 8+ (local installation required)
 - **Task**: Task runner for Go backend (install via `brew install go-task`)
 - **Tern**: Database migration tool (installed via Go modules)
+- **Playwright** (for E2E tests): Installed via `bun install`, browsers via `bunx playwright install`
 
 **Note**: Docker and Docker Compose are not yet configured. You must install PostgreSQL and Redis locally.
