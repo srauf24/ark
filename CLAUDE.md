@@ -168,14 +168,17 @@ The backend follows **clean architecture** principles with clear separation of c
 ### Key Architectural Patterns
 
 **Two-Phase Authentication**:
+- **CRITICAL**: Clerk SDK must be initialized with `clerk.SetKey(cfg.Auth.Clerk.SecretKey)` in `internal/server/server.go` during server startup. Without this, JWT verification will fail with 401 errors.
 - Phase 1: `ClerkAuthMiddleware` - Applied globally to all `/api/v1/*` routes
   - Validates JWT from `Authorization: Bearer <token>`
   - Verifies with Clerk SDK v2
-  - Stores session claims in Echo context
-- Phase 2: `RequireAuth` - Applied per route group
-  - Extracts user_id from verified claims
-  - Sets user context for handlers
+  - Stores session claims in Echo context using key `clerk_session_claims`
+- Phase 2: `RequireAuth` - Applied globally to all `/api/v1/*` routes (MUST be applied after ClerkAuthMiddleware)
+  - Retrieves verified claims from context
+  - Extracts user_id from claims.Subject
+  - Sets `user_id` in context for handlers
   - **All database queries MUST be scoped to user_id** (critical for multi-tenancy)
+- **Common Issue**: If Phase 2 is missing from router configuration, handlers will fail with "unauthorized: user not authenticated" even though tokens are valid.
 
 **Error Handling**:
 - Custom error types in `internal/errs/`
@@ -542,9 +545,37 @@ function MyComponent() {
 
 **Features**:
 - Automatic JWT injection from Clerk (`Authorization: Bearer <token>`)
-- Custom JWT template named "custom" (configured in Clerk dashboard)
+- Custom JWT template named **"api-test"** (configured in Clerk dashboard)
 - Retry logic for 401 errors (up to 2 retries for token refresh)
 - Support for blob responses (file downloads)
+
+### Implemented Features
+
+**Asset List View** (`/assets`):
+- Component: `AssetList` with `AssetCard` children
+- Displays paginated grid of user's assets
+- Features:
+  - Dynamic icons based on asset type (Server, HardDrive, Container, Network, Box)
+  - Last updated timestamp (formatted with `date-fns`)
+  - Loading, error, and empty states
+  - Click to navigate to detail view
+- Data fetching: TanStack Query with `useApiClient`
+- Tests: Full coverage in `AssetList.test.tsx` and `AssetCard.test.tsx`
+
+**Asset Detail View** (`/assets/:id`):
+- Component: `AssetDetailPage`
+- Displays full asset information:
+  - Name, type, hostname
+  - Formatted JSON metadata viewer
+  - Created/updated timestamps
+  - Back navigation to list
+- Placeholder sections for future features (Logs, Actions)
+- Tests: Full coverage in `AssetDetailPage.test.tsx`
+
+**Testing Notes**:
+- All tests use `happy-dom` environment (specified via `// @vitest-environment happy-dom`)
+- Run with: `TZ=UTC VITE_CLERK_PUBLISHABLE_KEY=pk_test_mock bun x vitest run`
+- Timezone must be UTC to ensure consistent date formatting across environments
 - Full type safety from backend contracts
 
 ### Frontend Testing
@@ -594,6 +625,55 @@ test("should authenticate and view assets", async ({ page }) => {
 ```
 
 ## Troubleshooting
+
+### Authentication 401 Errors
+
+**Symptom**: Frontend shows "Failed to load assets" or backend logs show "unauthorized: user not authenticated" even though user is logged in.
+
+**Root Causes and Fixes**:
+
+1. **Clerk SDK not initialized** (Backend)
+   - **Check**: Look for `clerk.SetKey(cfg.Auth.Clerk.SecretKey)` in `apps/backend/internal/server/server.go`
+   - **Fix**: Add initialization in `server.New()` function before any middleware setup
+   - **Verify**: Backend logs should show "token verification successful" when requests arrive
+
+2. **RequireAuth middleware missing** (Backend)
+   - **Check**: Verify `internal/router/v1/v1.go` has BOTH middlewares:
+     ```go
+     v1.Use(m.Auth.ClerkAuthMiddleware)  // Phase 1: Verify token
+     v1.Use(m.Auth.RequireAuth)          // Phase 2: Set user_id
+     ```
+   - **Symptom**: Logs show "JWT verified and claims stored" but then "user not authenticated"
+   - **Fix**: Add `v1.Use(m.Auth.RequireAuth)` after ClerkAuthMiddleware
+
+3. **JWT template mismatch** (Frontend/Backend)
+   - **Check**: Frontend uses template "api-test" in `apps/frontend/src/api/index.ts`
+   - **Check**: Clerk dashboard has JWT template named "api-test" configured
+   - **Fix**: Create template in Clerk dashboard or update frontend to match existing template name
+
+4. **Clerk configuration mismatch** (Backend)
+   - **Check**: `ARK_AUTH.CLERK.JWT_ISSUER` matches your Clerk instance
+   - **Example**: `https://ace-dinosaur-39.clerk.accounts.dev`
+   - **Verify**: Decode JWT token (jwt.io) and check `iss` claim matches backend config
+
+5. **Publishable key mismatch** (Frontend)
+   - **Check**: `VITE_CLERK_PUBLISHABLE_KEY` in `.env.local` matches backend's Clerk instance
+   - **Example**: `pk_test_YWNlLWRpbm9zYXVyLTM5...` should correspond to same Clerk app as backend secret key
+
+**Debug Steps**:
+```bash
+# 1. Check backend logs for authentication flow
+tail -f apps/backend/logs/app.log | grep -E "token verification|JWT verified|user not authenticated"
+
+# 2. Test token generation in browser console
+await window.Clerk.session.getToken({ template: "api-test" })
+
+# 3. Verify backend config
+grep -E "ARK_AUTH.CLERK" apps/backend/.env
+
+# 4. Check frontend config  
+cat apps/frontend/.env.local
+```
 
 ### Frontend won't start or shows blank page
 

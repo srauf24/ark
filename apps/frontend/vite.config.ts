@@ -14,9 +14,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@ark/openapi": path.resolve(
         __dirname,
-        "../../packages/openapi/src"
+        "../../packages/openapi/dist"
       ),
-      "@ark/zod": path.resolve(__dirname, "../../packages/zod/src"),
+      "@ark/zod": path.resolve(__dirname, "../../packages/zod/dist"),
     },
   },
   test: {

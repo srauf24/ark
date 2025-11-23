@@ -1,6 +1,7 @@
 import { getSecurityMetadata } from "../utils.js";
 import {
     ZAsset,
+    ZAssetListResponse,
     ZCreateAssetRequest,
     ZUpdateAssetRequest,
     ZErrorResponse,
@@ -30,7 +31,7 @@ export const assetContract = c.router(
                 sort_order: z.enum(["asc", "desc"]).optional(),
             }),
             responses: {
-                200: schemaWithPagination(ZAsset),
+                200: ZAssetListResponse,
             },
             metadata: metadata,
         },

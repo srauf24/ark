@@ -10,6 +10,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { CLERK_PUBLISHABLE_KEY } from "@/config/env";
+import { AssetList } from "@/components/assets/AssetList";
+import { Layout } from "@/components/layout/Layout";
+import { AssetDetailPage } from "@/pages/assets/AssetDetailPage";
 
 // Create QueryClient instance with default options
 const queryClient = new QueryClient({
@@ -38,12 +41,13 @@ function App() {
                 element={
                   <>
                     <SignedIn>
-                      <div className="p-8">
-                        <h1 className="text-3xl font-bold">Authenticated!</h1>
-                        <p className="mt-4 text-gray-600">
-                          You are now signed in to Ark.
-                        </p>
-                      </div>
+                      <Routes>
+                        <Route element={<Layout />}>
+                          <Route path="/" element={<AssetList />} />
+                          <Route path="/assets" element={<AssetList />} />
+                          <Route path="/assets/:id" element={<AssetDetailPage />} />
+                        </Route>
+                      </Routes>
                     </SignedIn>
                     <SignedOut>
                       <RedirectToSignIn />

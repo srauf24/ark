@@ -14,8 +14,8 @@ export const ZTimestamp = z.string().datetime();
 // Base model fields - matches Go model.Base
 export const ZBase = z.object({
   id: ZUuid,
-  createdAt: ZTimestamp,
-  updatedAt: ZTimestamp,
+  created_at: ZTimestamp,
+  updated_at: ZTimestamp,
 });
 
 // Pagination query parameters

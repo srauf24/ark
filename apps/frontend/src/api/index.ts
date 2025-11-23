@@ -31,7 +31,7 @@ export const useApiClient = ({ isBlob = false }: { isBlob?: boolean } = {}) => {
         try {
           const result = await axios.request({
             method: method as Method,
-            url: `${API_URL}/api${path}`,
+            url: `${API_URL}${path}`,
             headers: {
               ...headers,
               ...(token ? { Authorization: `Bearer ${token}` } : {}),

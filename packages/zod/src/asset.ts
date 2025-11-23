@@ -21,6 +21,8 @@ export const ZAsset = ZBase.extend({
     metadata: ZAssetMetadata.nullable().optional(),
 });
 
+export type Asset = z.infer<typeof ZAsset>;
+
 // Create Asset request - matches Go model.CreateAssetRequest
 export const ZCreateAssetRequest = z.object({
     name: z.string().min(1).max(100),

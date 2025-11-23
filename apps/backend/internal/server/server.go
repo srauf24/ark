@@ -7,13 +7,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/newrelic/go-agent/v3/integrations/nrredis-v9"
-	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 	"ark/internal/config"
 	"ark/internal/database"
 	"ark/internal/lib/job"
 	loggerPkg "ark/internal/logger"
+
+	"github.com/clerk/clerk-sdk-go/v2"
+	"github.com/newrelic/go-agent/v3/integrations/nrredis-v9"
+	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog"
 )
 
 type Server struct {
@@ -31,6 +33,9 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
+
+	// Initialize Clerk SDK
+	clerk.SetKey(cfg.Auth.Clerk.SecretKey)
 
 	// Redis client with New Relic integration
 	redisClient := redis.NewClient(&redis.Options{
