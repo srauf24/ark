@@ -39,6 +39,9 @@ bun typecheck
 # Clean build artifacts
 bun clean
 ```
+### Design Principles
+design-principles.md
+
 
 ### Monorepo commands (from root directory)
 ```bash

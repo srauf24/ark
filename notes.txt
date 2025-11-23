@@ -1,33 +1,65 @@
-# Ark Frontend Debugging Guide (2025-11-22)
+# Ark Project Notes & Documentation
 
-## Issue Summary
+## Project Overview
+Ark is a homelab asset tracking and configuration log management application.
+- **Frontend**: React 19, Vite, TypeScript, TailwindCSS v4
+- **Backend**: Go (Echo framework)
+- **Database**: PostgreSQL
+- **Authentication**: Clerk
+
+## Technology Stack Explained
+
+### Vite (Frontend Build Tool)
+Vite is our build tool and development server for the frontend.
+- **Why we use it**: It's extremely fast compared to older tools like Webpack.
+- **Environment Variables**: Vite handles env vars differently than Node.js.
+  - It ONLY loads variables starting with `VITE_` to prevent accidental exposure of server secrets.
+  - It accesses them via `import.meta.env` (browser standard) instead of `process.env` (Node.js standard).
+  - It automatically loads files named `.env.local` in development.
+
+### Clerk (Authentication)
+Clerk handles all user management and authentication.
+- **Frontend Integration**: We use `@clerk/clerk-react`.
+  - `ClerkProvider`: Wraps the app to provide auth context.
+  - `AuthProvider`: Our custom wrapper that ensures the token is available.
+  - `useAuth`: Hook to get the current user's ID and token.
+- **Backend Integration**: The backend verifies the JWT token sent by the frontend.
+- **Keys**:
+  - **Publishable Key (`pk_test_...`)**: Safe for frontend. Used to identify your app to Clerk.
+  - **Secret Key (`sk_test_...`)**: BACKEND ONLY. Used to verify tokens and manage users. NEVER put this in frontend code.
+
+---
+
+## Debugging Guide (Issue Resolved 2025-11-22)
+
+### Issue Summary
 The frontend application was showing a blank page and failing to render.
 
-## Root Causes Found
+### Root Causes Found
 1. **Environment Variables Not Loading**: Vite only automatically loads `.env.local` files, but we initially had a `.env` file (which Vite ignores in dev mode unless variables are prefixed with `VITE_`).
 2. **Incorrect Environment Access**: The code was using `process.env` (Node.js style) instead of `import.meta.env` (Vite style), causing `ReferenceError: process is not defined`.
 3. **Invalid Clerk Key**: The `.env.local` file was initially using a Clerk Secret Key (`sk_test_...`) instead of the Publishable Key (`pk_test_...`).
 
-## Solution Steps Taken
+### Solution Steps Taken
 1. **Renamed File**: Renamed `.env` to `.env.local`.
 2. **Fixed Code**: Updated `src/config/env.ts` to use `import.meta.env` and properly export individual variables.
 3. **Corrected Key**: Updated `.env.local` with the correct Clerk Publishable Key (`pk_test_...`).
 4. **Restarted Server**: Restarted `bun dev` to pick up the new environment variables.
 
-## How to Debug in Future
+### How to Debug in Future
 
-### 1. Check Console for Errors
+#### 1. Check Console for Errors
 - Open Browser DevTools (F12) -> Console
 - Look for red errors.
 - If you see `ReferenceError: process is not defined`, you're using Node.js globals in the browser.
 - If you see `Invalid environment variables`, your `.env.local` is missing or incorrect.
 
-### 2. Verify Environment Variables
+#### 2. Verify Environment Variables
 - In Vite, environment variables MUST start with `VITE_` (e.g., `VITE_API_URL`).
 - Access them via `import.meta.env.VITE_API_URL`.
 - They are only loaded from `.env.local` (or `.env.development`) on server start. **Always restart `bun dev` after changing `.env` files.**
 
-### 3. Verify Clerk Setup
+#### 3. Verify Clerk Setup
 - Ensure you are using the **Publishable Key** (`pk_test_...`) in the frontend.
 - Ensure you are using the **Secret Key** (`sk_test_...`) in the backend.
 - Never mix them up!
