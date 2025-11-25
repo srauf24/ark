@@ -75,6 +75,8 @@ export function AssetForm({
     const onSubmit = (data: any) => {
         // Parse metadata JSON if provided
         let parsedData = { ...data };
+
+        // Handle metadata field
         if (data.metadata && data.metadata.trim()) {
             try {
                 parsedData.metadata = JSON.parse(data.metadata);
@@ -93,6 +95,11 @@ export function AssetForm({
         // Remove empty hostname field
         if (!parsedData.hostname || parsedData.hostname.trim() === "") {
             delete parsedData.hostname;
+        }
+
+        // Remove undefined type field
+        if (!parsedData.type || parsedData.type === "") {
+            delete parsedData.type;
         }
 
         // Call appropriate mutation
