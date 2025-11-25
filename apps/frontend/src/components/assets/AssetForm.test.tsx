@@ -1,12 +1,14 @@
+// Set environment variables BEFORE any imports
+process.env.VITE_CLERK_PUBLISHABLE_KEY = "pk_test_mock_key_for_testing";
+process.env.VITE_API_URL = "http://localhost:8080";
+process.env.VITE_ENV = "local";
+
 import { describe, it, expect } from "vitest";
-import { AssetForm } from "./AssetForm";
 
 describe("AssetForm", () => {
-    it("should export AssetForm component", () => {
+    it("should export AssetForm as a function", async () => {
+        const { AssetForm } = await import("./AssetForm");
         expect(AssetForm).toBeDefined();
-    });
-
-    it("should be a function", () => {
         expect(typeof AssetForm).toBe("function");
     });
 });

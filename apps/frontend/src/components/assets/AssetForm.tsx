@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ZCreateAssetRequest, ZUpdateAssetRequest } from "@ark/zod";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
     Form,
     FormControl,
@@ -21,6 +22,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateAsset, useUpdateAsset } from "@/hooks/useAssets";
+import { getErrorMessage, getFieldErrors } from "@/lib/errors";
 import type { Asset } from "@/types";
 
 interface AssetFormProps {
@@ -43,10 +46,16 @@ export function AssetForm({
     asset,
     onSuccess,
     onCancel,
-    isPending = false,
+    isPending: externalPending = false,
 }: AssetFormProps) {
     const mode = asset ? "edit" : "create";
     const schema = mode === "edit" ? ZUpdateAssetRequest : ZCreateAssetRequest;
+
+    const createMutation = useCreateAsset();
+    const updateMutation = useUpdateAsset();
+
+    const mutation = mode === "create" ? createMutation : updateMutation;
+    const isPending = externalPending || mutation.isPending;
 
     const form = useForm<{
         name: string;
@@ -86,9 +95,55 @@ export function AssetForm({
             delete parsedData.hostname;
         }
 
-        // This will be connected to API mutations in Step 6
-        console.log("Form submitted:", parsedData);
-        onSuccess();
+        // Call appropriate mutation
+        if (mode === "create") {
+            createMutation.mutate(parsedData, {
+                onSuccess: () => {
+                    toast.success("Asset created successfully");
+                    onSuccess();
+                },
+                onError: (error) => {
+                    const message = getErrorMessage(error);
+                    toast.error(message);
+
+                    // Set field-level errors if available
+                    const fieldErrors = getFieldErrors(error);
+                    if (fieldErrors) {
+                        Object.entries(fieldErrors).forEach(([field, msg]) => {
+                            form.setError(field as any, {
+                                type: "manual",
+                                message: msg,
+                            });
+                        });
+                    }
+                },
+            });
+        } else if (asset) {
+            updateMutation.mutate(
+                { id: asset.id, data: parsedData },
+                {
+                    onSuccess: () => {
+                        toast.success("Asset updated successfully");
+                        onSuccess();
+                    },
+                    onError: (error) => {
+                        const message = getErrorMessage(error);
+                        toast.error(message);
+
+                        // Set field-level errors if available
+                        const fieldErrors = getFieldErrors(error);
+                        if (fieldErrors) {
+                            Object.entries(fieldErrors).forEach(([field, msg]) => {
+                                form.setError(field as any, {
+                                    type: "manual",
+                                    message: msg,
+                                });
+                            });
+                        }
+                    },
+                }
+            );
+        }
     };
 
     return (
