@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AssetCard } from "./AssetCard";
 import { AssetForm } from "./AssetForm";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -44,11 +44,16 @@ export function AssetList() {
         return (
             <>
                 <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-center">
-                    <div className="text-lg font-semibold">No assets found</div>
-                    <p className="text-sm text-muted-foreground">
-                        Get started by adding your first asset to the inventory.
-                    </p>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-1 border border-border-subtle">
+                        <Server className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-1">
+                        <div className="text-xl font-semibold tracking-tight">No assets found</div>
+                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                            Get started by adding your first asset to the inventory.
+                        </p>
+                    </div>
+                    <Button onClick={() => setIsCreateDialogOpen(true)} className="mt-2">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Asset
                     </Button>
@@ -88,8 +93,14 @@ export function AssetList() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {data.assets.map((asset) => (
-                    <AssetCard key={asset.id} asset={asset} />
+                {data.assets.map((asset, index) => (
+                    <div
+                        key={asset.id}
+                        className="animate-fade-in opacity-0 fill-mode-forwards"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                        <AssetCard asset={asset} />
+                    </div>
                 ))}
             </div>
 

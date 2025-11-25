@@ -39,7 +39,7 @@ export function AssetCard({ asset }: AssetCardProps) {
 
     return (
         <Link to={`/assets/${asset.id}`} className="block transition-transform hover:scale-[1.02]">
-            <Card className="h-full cursor-pointer hover:border-primary/50">
+            <Card className="h-full cursor-pointer hover:border-primary/50 hover:bg-gradient-to-br hover:from-surface-1 hover:to-surface-2 transition-colors duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium truncate pr-2">
                         {asset.name}
