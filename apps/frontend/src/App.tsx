@@ -4,15 +4,15 @@ import {
   SignIn,
   SignedIn,
   SignedOut,
-  RedirectToSignIn,
 } from "@clerk/clerk-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { CLERK_PUBLISHABLE_KEY } from "@/config/env";
 import { AssetList } from "@/components/assets/AssetList";
 import { Layout } from "@/components/layout/Layout";
 import { AssetDetailPage } from "@/pages/assets/AssetDetailPage";
+import { LandingPage } from "@/pages/LandingPage";
 import { Toaster } from "@/components/ui/sonner";
 
 // Create QueryClient instance with default options
@@ -34,28 +34,43 @@ function App() {
           <BrowserRouter>
             <Routes>
               {/* Sign-in route */}
-              <Route path="/sign-in/*" element={<SignIn />} />
+              <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
+              <Route path="/sign-up/*" element={<SignIn routing="path" path="/sign-up" />} />
 
-              {/* Protected routes */}
+              {/* Landing page for signed-out users, redirect to /assets for signed-in */}
               <Route
-                path="/*"
+                path="/"
                 element={
                   <>
-                    <SignedIn>
-                      <Routes>
-                        <Route element={<Layout />}>
-                          <Route path="/" element={<AssetList />} />
-                          <Route path="/assets" element={<AssetList />} />
-                          <Route path="/assets/:id" element={<AssetDetailPage />} />
-                        </Route>
-                      </Routes>
-                    </SignedIn>
                     <SignedOut>
-                      <RedirectToSignIn />
+                      <LandingPage />
                     </SignedOut>
+                    <SignedIn>
+                      <Navigate to="/assets" replace />
+                    </SignedIn>
                   </>
                 }
               />
+
+              {/* Protected routes - Layout with nested routes */}
+              <Route element={<Layout />}>
+                <Route
+                  path="/assets"
+                  element={
+                    <SignedIn>
+                      <AssetList />
+                    </SignedIn>
+                  }
+                />
+                <Route
+                  path="/assets/:id"
+                  element={
+                    <SignedIn>
+                      <AssetDetailPage />
+                    </SignedIn>
+                  }
+                />
+              </Route>
             </Routes>
           </BrowserRouter>
         </AuthProvider>
