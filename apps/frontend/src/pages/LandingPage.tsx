@@ -5,9 +5,7 @@ import {
   LayoutDashboard,
   Zap,
   Shield,
-  Terminal,
   Network,
-  HardDrive,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,14 +98,6 @@ export function LandingPage() {
                     <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-gray-700 hover:bg-gray-900 hover:border-gray-600"
-                >
-                  <Terminal className="mr-2 w-4 h-4" />
-                  View Demo
-                </Button>
               </div>
 
               {/* Stats */}
