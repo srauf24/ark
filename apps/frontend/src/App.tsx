@@ -13,6 +13,7 @@ import { CLERK_PUBLISHABLE_KEY } from "@/config/env";
 import { AssetList } from "@/components/assets/AssetList";
 import { Layout } from "@/components/layout/Layout";
 import { AssetDetailPage } from "@/pages/assets/AssetDetailPage";
+import { Toaster } from "@/components/ui/sonner";
 
 // Create QueryClient instance with default options
 const queryClient = new QueryClient({
@@ -59,6 +60,7 @@ function App() {
           </BrowserRouter>
         </AuthProvider>
       </QueryClientProvider>
+      <Toaster />
     </ClerkProvider>
   );
 }
