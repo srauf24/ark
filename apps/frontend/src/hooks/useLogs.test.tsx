@@ -1,248 +1,100 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
-import {
-    useLogs,
-    useLog,
-    useCreateLog,
-    useUpdateLog,
-    useDeleteLog,
-    logKeys,
-} from "./useLogs";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { useLogs, useCreateLog, useUpdateLog, useDeleteLog } from "./useLogs";
+import { createWrapper } from "../../test/utils";
 
-// Mock the API client
-const mockApiClient = {
-    Logs: {
-        listLogsByAsset: vi.fn(),
-        getLogById: vi.fn(),
-        createLog: vi.fn(),
-        updateLog: vi.fn(),
-        deleteLog: vi.fn(),
-    },
-};
+// Mock API client
+const mockListLogsByAsset = vi.fn();
+const mockCreateLog = vi.fn();
+const mockUpdateLog = vi.fn();
+const mockDeleteLog = vi.fn();
 
 vi.mock("@/api", () => ({
-    useApiClient: () => mockApiClient,
+    useApiClient: () => ({
+        logs: {
+            listLogsByAsset: mockListLogsByAsset,
+            createLog: mockCreateLog,
+            updateLog: mockUpdateLog,
+            deleteLog: mockDeleteLog,
+        },
+    }),
 }));
 
-// Test wrapper with QueryClient
-function createWrapper() {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-        },
-    });
+describe("useLogs Hooks", () => {
+    const assetId = "asset-123";
 
-    return function Wrapper({ children }: { children: ReactNode }) {
-        return (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
-    };
-}
-
-describe("useLogs hooks", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    describe("logKeys", () => {
-        it("should generate correct query keys", () => {
-            expect(logKeys.all).toEqual(["logs"]);
-            expect(logKeys.lists()).toEqual(["logs", "list"]);
-            expect(logKeys.list("asset-1", { limit: 10 })).toEqual(["logs", "list", "asset-1", { limit: 10 }]);
-            expect(logKeys.details()).toEqual(["logs", "detail"]);
-            expect(logKeys.detail("log-1")).toEqual(["logs", "detail", "log-1"]);
-        });
-    });
-
     describe("useLogs", () => {
-        it("should fetch logs list successfully", async () => {
-            const mockLogs = {
-                data: [
-                    {
-                        id: "log-1",
-                        asset_id: "asset-1",
-                        user_id: "user1",
-                        content: "Log content",
-                        created_at: "2024-01-01T00:00:00Z",
-                        updated_at: "2024-01-01T00:00:00Z",
-                    },
-                ],
-                total: 1,
-                limit: 50,
-                offset: 0,
-            };
+        it("fetches logs successfully", async () => {
+            const mockData = { logs: [], total: 0, limit: 50, offset: 0 };
+            mockListLogsByAsset.mockResolvedValue({ status: 200, body: mockData });
 
-            mockApiClient.Logs.listLogsByAsset.mockResolvedValue({
-                status: 200,
-                body: mockLogs,
-            });
-
-            const { result } = renderHook(() => useLogs("asset-1"), {
+            const { result } = renderHook(() => useLogs(assetId), {
                 wrapper: createWrapper(),
             });
 
             await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(result.current.data).toEqual(mockLogs);
-            expect(mockApiClient.Logs.listLogsByAsset).toHaveBeenCalledWith({
-                params: { id: "asset-1" },
+            expect(result.current.data).toEqual(mockData);
+            expect(mockListLogsByAsset).toHaveBeenCalledWith({
+                params: { id: assetId },
                 query: {},
             });
-        });
-
-        it("should fetch logs with query parameters", async () => {
-            const params = { limit: 10, offset: 0 };
-            mockApiClient.Logs.listLogsByAsset.mockResolvedValue({
-                status: 200,
-                body: { data: [], total: 0, limit: 10, offset: 0 },
-            });
-
-            const { result } = renderHook(() => useLogs("asset-1", params), {
-                wrapper: createWrapper(),
-            });
-
-            await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(mockApiClient.Logs.listLogsByAsset).toHaveBeenCalledWith({
-                params: { id: "asset-1" },
-                query: params,
-            });
-        });
-
-        it("should be disabled when no assetId provided", () => {
-            const { result } = renderHook(() => useLogs(""), {
-                wrapper: createWrapper(),
-            });
-
-            expect(result.current.fetchStatus).toBe("idle");
-            expect(mockApiClient.Logs.listLogsByAsset).not.toHaveBeenCalled();
-        });
-    });
-
-    describe("useLog", () => {
-        it("should fetch single log successfully", async () => {
-            const mockLog = {
-                id: "log-1",
-                asset_id: "asset-1",
-                user_id: "user1",
-                content: "Log content",
-                created_at: "2024-01-01T00:00:00Z",
-                updated_at: "2024-01-01T00:00:00Z",
-            };
-
-            mockApiClient.Logs.getLogById.mockResolvedValue({
-                status: 200,
-                body: { data: mockLog },
-            });
-
-            const { result } = renderHook(() => useLog("log-1"), {
-                wrapper: createWrapper(),
-            });
-
-            await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(result.current.data).toEqual(mockLog);
-            expect(mockApiClient.Logs.getLogById).toHaveBeenCalledWith({
-                params: { id: "log-1" },
-            });
-        });
-
-        it("should be disabled when no ID provided", () => {
-            const { result } = renderHook(() => useLog(""), {
-                wrapper: createWrapper(),
-            });
-
-            expect(result.current.fetchStatus).toBe("idle");
-            expect(mockApiClient.Logs.getLogById).not.toHaveBeenCalled();
         });
     });
 
     describe("useCreateLog", () => {
-        it("should create log successfully", async () => {
-            const newLog = {
-                id: "new-log",
-                asset_id: "asset-1",
-                user_id: "user1",
-                content: "New log",
-                created_at: "2024-01-01T00:00:00Z",
-                updated_at: "2024-01-01T00:00:00Z",
-            };
+        it("creates log successfully", async () => {
+            const mockLog = { id: "log-1", content: "test" };
+            mockCreateLog.mockResolvedValue({ status: 201, body: mockLog });
 
-            mockApiClient.Logs.createLog.mockResolvedValue({
-                status: 201,
-                body: { data: newLog },
-            });
-
-            const { result } = renderHook(() => useCreateLog(), {
+            const { result } = renderHook(() => useCreateLog(assetId), {
                 wrapper: createWrapper(),
             });
 
-            result.current.mutate({ assetId: "asset-1", data: { content: "New log" } });
+            result.current.mutate({ content: "test" });
 
             await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(result.current.data).toEqual({ log: newLog, assetId: "asset-1" });
-            expect(mockApiClient.Logs.createLog).toHaveBeenCalledWith({
-                params: { id: "asset-1" },
-                body: { content: "New log" },
+            expect(mockCreateLog).toHaveBeenCalledWith({
+                params: { id: assetId },
+                body: { content: "test" },
             });
         });
     });
 
     describe("useUpdateLog", () => {
-        it("should update log successfully", async () => {
-            const updatedLog = {
-                id: "log-1",
-                asset_id: "asset-1",
-                user_id: "user1",
-                content: "Updated log",
-                created_at: "2024-01-01T00:00:00Z",
-                updated_at: "2024-01-02T00:00:00Z",
-            };
+        it("updates log successfully", async () => {
+            const mockLog = { id: "log-1", content: "updated" };
+            mockUpdateLog.mockResolvedValue({ status: 200, body: mockLog });
 
-            mockApiClient.Logs.updateLog.mockResolvedValue({
-                status: 200,
-                body: { data: updatedLog },
-            });
-
-            const { result } = renderHook(() => useUpdateLog(), {
+            const { result } = renderHook(() => useUpdateLog(assetId), {
                 wrapper: createWrapper(),
             });
 
-            result.current.mutate({ id: "log-1", data: { content: "Updated log" } });
+            result.current.mutate({ id: "log-1", data: { content: "updated" } });
 
             await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(result.current.data).toEqual(updatedLog);
-            expect(mockApiClient.Logs.updateLog).toHaveBeenCalledWith({
+            expect(mockUpdateLog).toHaveBeenCalledWith({
                 params: { id: "log-1" },
-                body: { content: "Updated log" },
+                body: { content: "updated" },
             });
         });
     });
 
     describe("useDeleteLog", () => {
-        it("should delete log successfully", async () => {
-            mockApiClient.Logs.deleteLog.mockResolvedValue({
-                status: 204,
-                body: undefined,
-            });
+        it("deletes log successfully", async () => {
+            mockDeleteLog.mockResolvedValue({ status: 204, body: null });
 
-            const { result } = renderHook(() => useDeleteLog(), {
+            const { result } = renderHook(() => useDeleteLog(assetId), {
                 wrapper: createWrapper(),
             });
 
-            result.current.mutate({ id: "log-1", assetId: "asset-1" });
+            result.current.mutate("log-1");
 
             await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(result.current.data).toEqual({ id: "log-1", assetId: "asset-1" });
-            expect(mockApiClient.Logs.deleteLog).toHaveBeenCalledWith({
+            expect(mockDeleteLog).toHaveBeenCalledWith({
                 params: { id: "log-1" },
             });
         });

@@ -30,6 +30,7 @@ import {
 import { AssetForm } from "@/components/assets/AssetForm";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import { useAsset, useDeleteAsset } from "@/hooks/useAssets";
+import { LogList } from "@/components/logs/LogList";
 
 const getAssetIcon = (type: string | null | undefined): LucideIcon => {
     switch (type) {
@@ -186,18 +187,9 @@ export function AssetDetailPage() {
                 </div>
 
                 {/* Placeholder for Logs - to be implemented in ARK-F4 */}
-                <Card className="opacity-60">
-                    <CardHeader>
-                        <CardTitle>Logs</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex h-32 items-center justify-center rounded-md border border-dashed">
-                            <p className="text-sm text-muted-foreground">
-                                Log history will be available soon
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="space-y-6">
+                    <LogList assetId={data.id} />
+                </div>
             </div>
 
             {/* Edit Dialog */}

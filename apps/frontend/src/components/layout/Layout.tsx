@@ -7,6 +7,7 @@ export function Layout() {
                 <div className="container flex h-14 items-center">
                     <div className="mr-4 hidden md:flex">
                         <a className="mr-6 flex items-center space-x-2" href="/">
+                            <img src="/icon-192.png" alt="Ark Logo" className="h-6 w-6" />
                             <span className="hidden font-bold sm:inline-block">Ark</span>
                         </a>
                     </div>
