@@ -51,9 +51,7 @@ export const logContract = c.router(
             }),
             body: ZCreateLogRequest,
             responses: {
-                201: z.object({
-                    data: ZAssetLog,
-                }),
+                201: ZAssetLog,
                 400: ZErrorResponse,
                 404: ZErrorResponse,
             },
@@ -69,9 +67,7 @@ export const logContract = c.router(
                 id: ZUuid,
             }),
             responses: {
-                200: z.object({
-                    data: ZAssetLog,
-                }),
+                200: ZAssetLog,
                 404: ZErrorResponse,
             },
             metadata: metadata,
@@ -87,9 +83,7 @@ export const logContract = c.router(
             }),
             body: ZUpdateLogRequest,
             responses: {
-                200: z.object({
-                    data: ZAssetLog,
-                }),
+                200: ZAssetLog,
                 400: ZErrorResponse,
                 404: ZErrorResponse,
             },

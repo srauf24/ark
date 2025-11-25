@@ -3,7 +3,10 @@
 > [!NOTE]
 > This project was migrated from the garden_journal codebase. The migration is complete - all plant/observation code has been replaced with asset/log equivalents. Module name updated to `ark`, database name is `ark`.
 
+# Ark Backend Guide
+
 ## Overview
+The backend for **Ark** is built with Go (Golang) using the Echo framework. It provides a RESTful API for the frontend.
 Ark is a homelab asset tracking and configuration log management application with AI-powered search. Built with Go (backend) and TypeScript/React (frontend) in a Turborepo monorepo.
 Core Use Case: Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes. AI assistant helps query logs in natural language.
 
@@ -89,9 +92,8 @@ bashapps/backend/
 └── tests/
     ├── integration/           # Integration tests
     └── manual/                # Manual test files
-        ├── test_auth.http        # Authentication testing
-        ├── asset.http            # Asset CRUD (TO BE CREATED)
-        ├── log.http              # Log CRUD (TO BE CREATED)
+    └── manual/                # Manual test files
+        ├── test_auth.http        # Authentication & Asset/Log CRUD testing
         ├── ai.http               # AI queries (TO BE CREATED)
         └── e2e_ai_flow.http      # E2E AI flow (TO BE CREATED)
 Frontend Structure
@@ -179,10 +181,6 @@ GET    /health                     # Health check (database, redis)
 GET    /openapi.json               # OpenAPI specification
 ```
 
-**OLD Endpoints (TO BE REMOVED):**
-```
-❌ /api/v1/plants                  # DELETE - replaced by /assets
-❌ /api/v1/observations            # DELETE - replaced by /logs
 Request/Response Examples:
 json// AI Query Request
 {
@@ -228,8 +226,6 @@ json// AI Query Request
 **Request Flow:**
 ```
 Request → CORS/Logging → New Relic Tracing → ClerkAuth → RequireAuth → Validation → Handler → ErrorHandler → Response
-Note: Authentication middleware from garden_journal can be reused as-is. Update route groups to apply to /assets and /logs instead of /plants and /observations.
-
 Configuration
 Required Environment Variables:
 bash# Server
@@ -317,7 +313,6 @@ task migrations:up
 Migration Strategy:
 
 Starting fresh: Create new ark database, apply Ark migrations
-Have garden_journal data: Optionally export plants/observations, transform to assets/logs, import (not required for MVP)
 
 Getting JWT Tokens
 Browser Console:
@@ -389,10 +384,6 @@ javascriptawait window.Clerk.session.getToken({ template: "api-test" })
 - Welcome email
 - Future: Password reset, notifications, digests
 
-**Template Updates Needed:**
-- Change branding from "garden_journal" to "Ark"
-- Update sender name/email
-- Update template content for homelab context
 
 ---
 
@@ -530,7 +521,7 @@ Returns JSON errors
 Hides stack traces in production
 Integrates with New Relic error tracking
 
-Note: Error handling from garden_journal can be reused as-is. No changes needed to middleware/global.go.
+
 
 What to Reuse from Garden Journal
 ✅ KEEP (production-ready infrastructure):

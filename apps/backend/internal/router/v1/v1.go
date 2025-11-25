@@ -39,6 +39,10 @@ func RegisterRoutes(router *echo.Echo, h *handler.Handlers, m *middleware.Middle
 	// This verifies JWT tokens and stores session claims in context
 	v1.Use(m.Auth.ClerkAuthMiddleware)
 
+	// Phase 2: Apply RequireAuth globally to all v1 routes
+	// This extracts user_id from claims and sets it in context
+	v1.Use(m.Auth.RequireAuth)
+
 	// Asset routes - RESTful CRUD operations
 	// All operations scoped to authenticated user via middleware
 	assets := v1.Group("/assets")

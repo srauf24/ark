@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Common Zod schemas for Garden Journal API
+ * Common Zod schemas for Ark API
  * These schemas are used across multiple resources
  */
 
@@ -14,8 +14,8 @@ export const ZTimestamp = z.string().datetime();
 // Base model fields - matches Go model.Base
 export const ZBase = z.object({
   id: ZUuid,
-  createdAt: ZTimestamp,
-  updatedAt: ZTimestamp,
+  created_at: ZTimestamp,
+  updated_at: ZTimestamp,
 });
 
 // Pagination query parameters

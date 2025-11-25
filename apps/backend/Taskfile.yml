@@ -1,7 +1,10 @@
 version: '3'
 
+dotenv: ['.env']
+
+
 vars:
-  ARK_DB_DSN: '{{.ARK_DB_DSN | default ""}}'
+  ARK_DB_DSN: '{{.ARK_DB_DSN | default "postgres://postgres@localhost:5432/ark?sslmode=disable"}}'
 
 tasks:
   help:

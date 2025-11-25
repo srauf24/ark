@@ -19,7 +19,7 @@
 # Error: "Missing authorization header"
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants
+GET {{baseUrl}}{{apiPrefix}}/assets
 
 ###############################################################################
 # TEST 2: Invalid Token Format - No Bearer Prefix
@@ -27,7 +27,7 @@ GET {{baseUrl}}{{apiPrefix}}/plants
 # Error: "Invalid authorization header format"
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants
+GET {{baseUrl}}{{apiPrefix}}/assets
 Authorization: invalidtokenhere
 
 ###############################################################################
@@ -36,7 +36,7 @@ Authorization: invalidtokenhere
 # Error: "Invalid authorization header format"
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants
+GET {{baseUrl}}{{apiPrefix}}/assets
 Authorization: Bearer
 
 ###############################################################################
@@ -45,7 +45,7 @@ Authorization: Bearer
 # Error: "Invalid or expired token"
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants
+GET {{baseUrl}}{{apiPrefix}}/assets
 Authorization: Bearer invalid.jwt.token
 
 ###############################################################################
@@ -54,100 +54,91 @@ Authorization: Bearer invalid.jwt.token
 # Error: "Invalid or expired token"
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants
+GET {{baseUrl}}{{apiPrefix}}/assets
 Authorization: Bearer randomstringnotajwt
 
 ###############################################################################
-# TEST 6: Valid JWT - GET Plants
+# TEST 6: Valid JWT - GET Assets
 # Expected: 200 OK
-# Response: Paginated list of plants (may be empty)
+# Response: Paginated list of assets (may be empty)
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants
+GET {{baseUrl}}{{apiPrefix}}/assets
 Authorization: Bearer {{validJwt}}
 
 ###############################################################################
-# TEST 7: Valid JWT - GET Plant by ID
-# Expected: 200 OK (if plant exists) or 404 Not Found
+# TEST 7: Valid JWT - GET Asset by ID
+# Expected: 200 OK (if asset exists) or 404 Not Found
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/plants/123e4567-e89b-12d3-a456-426614174000
+GET {{baseUrl}}{{apiPrefix}}/assets/123e4567-e89b-12d3-a456-426614174000
 Authorization: Bearer {{validJwt}}
 
 ###############################################################################
-# TEST 8: Valid JWT - GET Observations
+# TEST 8: Valid JWT - GET Logs
 # Expected: 200 OK
-# Response: Paginated list of observations
+# Response: Paginated list of logs
 ###############################################################################
 
-GET {{baseUrl}}{{apiPrefix}}/observations
+GET {{baseUrl}}{{apiPrefix}}/logs
 Authorization: Bearer {{validJwt}}
 
 ###############################################################################
-# TEST 9: Valid JWT - POST Plant (Create)
+# TEST 9: Valid JWT - POST Asset (Create)
 # Expected: 201 Created
-# Response: Created plant object
+# Response: Created asset object
 ###############################################################################
 
-POST {{baseUrl}}{{apiPrefix}}/plants
+POST {{baseUrl}}{{apiPrefix}}/assets
 Authorization: Bearer {{validJwt}}
 Content-Type: application/json
 
 {
-  "name": "Monstera Deliciosa",
-  "species": "Monstera deliciosa",
-  "location": "Living Room",
-  "wateringFrequency": 7,
-  "lastWatered": "2025-11-13T00:00:00Z",
-  "notes": "Needs indirect sunlight"
+  "name": "Production Server",
+  "type": "server",
+  "hostname": "prod-01",
+  "metadata": "{\"cpu\": \"16 cores\", \"ram\": \"32GB\"}"
 }
 
 ###############################################################################
-# TEST 10: Valid JWT - POST Observation (Create)
+# TEST 10: Valid JWT - POST Log (Create)
 # Expected: 201 Created
-# Response: Created observation object
-# Note: Replace {plantId} with an actual plant ID from your database
+# Response: Created log object
+# Note: Replace {assetId} with an actual asset ID from your database
 ###############################################################################
 
-POST {{baseUrl}}{{apiPrefix}}/observations
+POST {{baseUrl}}{{apiPrefix}}/assets/123e4567-e89b-12d3-a456-426614174000/logs
 Authorization: Bearer {{validJwt}}
 Content-Type: application/json
 
 {
-  "plantId": "123e4567-e89b-12d3-a456-426614174000",
-  "type": "watering",
-  "date": "2025-11-13T00:00:00Z",
-  "notes": "Watered with filtered water",
-  "images": []
+  "content": "Updated system packages",
+  "tags": ["maintenance", "update"]
 }
 
 ###############################################################################
-# TEST 11: Valid JWT - PUT Plant (Update)
+# TEST 11: Valid JWT - PUT Asset (Update)
 # Expected: 200 OK
-# Response: Updated plant object
-# Note: Replace {plantId} with an actual plant ID
+# Response: Updated asset object
+# Note: Replace {assetId} with an actual asset ID
 ###############################################################################
 
-PUT {{baseUrl}}{{apiPrefix}}/plants/123e4567-e89b-12d3-a456-426614174000
+PATCH {{baseUrl}}{{apiPrefix}}/assets/123e4567-e89b-12d3-a456-426614174000
 Authorization: Bearer {{validJwt}}
 Content-Type: application/json
 
 {
-  "name": "Monstera Deliciosa (Updated)",
-  "species": "Monstera deliciosa",
-  "location": "Bedroom",
-  "wateringFrequency": 10,
-  "lastWatered": "2025-11-13T00:00:00Z",
-  "notes": "Moved to bedroom for better light"
+  "name": "Production Server (Updated)",
+  "metadata": "{\"cpu\": \"16 cores\", \"ram\": \"64GB\"}"
 }
 
 ###############################################################################
-# TEST 12: Valid JWT - DELETE Plant
+# TEST 12: Valid JWT - DELETE Asset
 # Expected: 204 No Content
-# Note: Replace {plantId} with an actual plant ID
+# Note: Replace {assetId} with an actual asset ID
 ###############################################################################
 
-DELETE {{baseUrl}}{{apiPrefix}}/plants/123e4567-e89b-12d3-a456-426614174000
+DELETE {{baseUrl}}{{apiPrefix}}/assets/123e4567-e89b-12d3-a456-426614174000
 Authorization: Bearer {{validJwt}}
 
 ###############################################################################
@@ -162,13 +153,13 @@ Authorization: Bearer {{validJwt}}
 # [ ] Test 5: Random string returns 401
 
 # Authorized Operations:
-# [ ] Test 6: Valid JWT can GET plants list
-# [ ] Test 7: Valid JWT can GET single plant
-# [ ] Test 8: Valid JWT can GET observations list
-# [ ] Test 9: Valid JWT can POST (create) plant
-# [ ] Test 10: Valid JWT can POST (create) observation
-# [ ] Test 11: Valid JWT can PUT (update) plant
-# [ ] Test 12: Valid JWT can DELETE plant
+# [ ] Test 6: Valid JWT can GET assets list
+# [ ] Test 7: Valid JWT can GET single asset
+# [ ] Test 8: Valid JWT can GET logs list
+# [ ] Test 9: Valid JWT can POST (create) asset
+# [ ] Test 10: Valid JWT can POST (create) log
+# [ ] Test 11: Valid JWT can PATCH (update) asset
+# [ ] Test 12: Valid JWT can DELETE asset
 
 # Server Logs Verification:
 # [ ] "token verification successful" appears in logs
@@ -194,7 +185,7 @@ Authorization: Bearer {{validJwt}}
 #    $ psql -U srauf -d ark -c "SELECT 1"
 
 # 4. Database permissions are correct
-#    $ psql -U sameerauf -d ark -c "\dp plants"
+#    $ psql -U sameerauf -d ark -c "\dp assets"
 
 # 5. JWT token is fresh (not expired)
 #    - Decode token at https://jwt.io
@@ -214,7 +205,7 @@ Authorization: Bearer {{validJwt}}
 ###############################################################################
 
 # Method 1: From Browser Console (Recommended)
-# 1. Open your Garden Journal frontend in a browser
+# 1. Open your Ark frontend in a browser
 # 2. Open browser DevTools (F12)
 # 3. Go to Console tab
 # 4. Run: await window.Clerk.session.getToken({ template: "api-test" })
@@ -240,6 +231,6 @@ Authorization: Bearer {{validJwt}}
 
 # - All /api/v1/* endpoints require authentication
 # - JWT tokens expire after a configured time (check 'exp' claim)
-# - User can only access their own plants and observations
+# - User can only access their own assets and logs
 # - Rate limiting may apply to authentication endpoints
 # - For production, use HTTPS (https://) instead of HTTP

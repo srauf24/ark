@@ -2,9 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+# Ark Project Guide
 
-Ark is a production-ready monorepo for homelab asset tracking and configuration log management with AI-powered search capabilities. The project combines a Go backend (Echo framework) with a TypeScript/React frontend, organized using Turborepo for efficient builds and development.
+## Project Overview
+**Ark** is a self-hosted asset management system for homelabs. It allows users to track their hardware (servers, VMs, containers) and maintain a history of changes and logs.
+
+## Core Features
+- **Asset Management**: Track servers, VMs, containers, and network devices.
+- **Log History**: Maintain a chronological log of changes and maintenance tasks.
+- **Self-Hosted**: Designed to run in a homelab environment.
 
 **Core Use Case**: Track homelab infrastructure (servers, VMs, containers, network equipment) and maintain searchable logs of configuration changes. An AI assistant helps query logs using natural language.
 
@@ -50,6 +56,34 @@ bun typecheck
 bun clean
 ```
 
+### Frontend (from apps/frontend directory)
+```bash
+# Start development server
+bun dev
+
+# Build for production
+bun build
+
+# Testing
+bun test              # Run unit/component tests (Vitest)
+bun test:e2e          # Run E2E tests (Playwright, headless)
+bun test:e2e:ui       # Run E2E tests (Playwright UI mode)
+bun test:e2e:debug    # Run E2E tests (Playwright debug mode)
+bun test:e2e:report   # View E2E test report
+
+# Linting and formatting
+bun lint              # Check for linting issues
+bun lint:fix          # Auto-fix linting issues
+bun format            # Check formatting
+bun format:fix        # Auto-fix formatting
+
+# Type checking
+bun typecheck
+
+# Clean build artifacts
+bun clean
+```
+
 ### Backend (from apps/backend directory)
 ```bash
 # Run the application
@@ -80,7 +114,9 @@ task tidy
 task help
 ```
 
-### OpenAPI Documentation (from packages/openapi)
+### Shared Packages
+
+#### OpenAPI Package (from packages/openapi)
 ```bash
 # Generate OpenAPI specification (outputs to apps/backend/static/openapi.json)
 bun run gen
@@ -88,6 +124,14 @@ bun run gen
 # Build TypeScript contracts
 bun run build
 ```
+
+#### Zod Package (from packages/zod)
+```bash
+# Build shared Zod schemas and TypeScript types
+bun run build
+```
+
+**Important**: The frontend dev server waits for OpenAPI contracts to build before starting (`wait-on ../../packages/openapi/dist/index.js`). If the frontend won't start, ensure packages are built first.
 
 ## Backend Architecture
 
@@ -130,14 +174,17 @@ The backend follows **clean architecture** principles with clear separation of c
 ### Key Architectural Patterns
 
 **Two-Phase Authentication**:
+- **CRITICAL**: Clerk SDK must be initialized with `clerk.SetKey(cfg.Auth.Clerk.SecretKey)` in `internal/server/server.go` during server startup. Without this, JWT verification will fail with 401 errors.
 - Phase 1: `ClerkAuthMiddleware` - Applied globally to all `/api/v1/*` routes
   - Validates JWT from `Authorization: Bearer <token>`
   - Verifies with Clerk SDK v2
-  - Stores session claims in Echo context
-- Phase 2: `RequireAuth` - Applied per route group
-  - Extracts user_id from verified claims
-  - Sets user context for handlers
+  - Stores session claims in Echo context using key `clerk_session_claims`
+- Phase 2: `RequireAuth` - Applied globally to all `/api/v1/*` routes (MUST be applied after ClerkAuthMiddleware)
+  - Retrieves verified claims from context
+  - Extracts user_id from claims.Subject
+  - Sets `user_id` in context for handlers
   - **All database queries MUST be scoped to user_id** (critical for multi-tenancy)
+- **Common Issue**: If Phase 2 is missing from router configuration, handlers will fail with "unauthorized: user not authenticated" even though tokens are valid.
 
 **Error Handling**:
 - Custom error types in `internal/errs/`
@@ -432,7 +479,264 @@ go test ./... -short
 - Use environment variables for all secrets
 - API keys, JWT secrets, database passwords in env vars only
 
+## Frontend Architecture
+
+### Tech Stack
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Strict mode enabled for type safety
+- **Vite 7**: Ultra-fast build tool and dev server
+- **TailwindCSS v4**: Utility-first CSS with Vite plugin
+- **Clerk**: Authentication provider (`@clerk/clerk-react`)
+- **TanStack Query**: Server state management and data fetching
+- **React Router v7**: Client-side routing
+- **ts-rest**: Type-safe API client from OpenAPI contracts
+- **shadcn/ui**: Accessible component library (New York style, Lucide icons)
+- **Playwright**: E2E testing framework
+
+### Environment Variables (Frontend)
+
+**Critical**: Vite has special handling for environment variables:
+
+1. **Only variables prefixed with `VITE_` are exposed to the browser**
+   - This prevents accidental exposure of server secrets
+   - Example: `VITE_API_URL`, `VITE_CLERK_PUBLISHABLE_KEY`
+
+2. **Access via `import.meta.env`, NOT `process.env`**
+   - `process.env` is Node.js only and will cause `ReferenceError` in browser
+   - Use `import.meta.env.VITE_API_URL` in frontend code
+
+3. **Environment files loaded by Vite**:
+   - `.env.local` (loaded in development, gitignored)
+   - `.env.development` (loaded in development)
+   - `.env.production` (loaded in production)
+   - Plain `.env` files are NOT automatically loaded in dev mode
+
+4. **Always restart `bun dev` after changing `.env` files**
+
+**Required Frontend Variables** (in `.env.local`):
+```bash
+# Clerk Authentication (PUBLISHABLE key, not secret!)
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+
+# Backend API URL
+VITE_API_URL=http://localhost:8080
+
+# Environment
+VITE_ENV=local  # or "development" | "production"
+```
+
+**Common Mistake**: Using Clerk Secret Key (`sk_test_...`) in frontend instead of Publishable Key (`pk_test_...`). The secret key is BACKEND ONLY.
+
+### Type-Safe API Client
+
+The frontend uses ts-rest to create a fully type-safe API client from backend contracts:
+
+```typescript
+import { useApiClient } from "@/api";
+
+function MyComponent() {
+  const apiClient = useApiClient();
+
+  // Fully typed API call - response types inferred from backend
+  const response = await apiClient.assets.getAll({
+    query: { page: 1, limit: 10 }
+  });
+
+  if (response.status === 200) {
+    // response.body.data is typed as Asset[]
+    const assets = response.body.data;
+  }
+}
+```
+
+**Features**:
+- Automatic JWT injection from Clerk (`Authorization: Bearer <token>`)
+- Custom JWT template named **"api-test"** (configured in Clerk dashboard)
+- Retry logic for 401 errors (up to 2 retries for token refresh)
+- Support for blob responses (file downloads)
+
+### Implemented Features
+
+**Asset List View** (`/assets`):
+- Component: `AssetList` with `AssetCard` children
+- Displays paginated grid of user's assets
+- Features:
+  - Dynamic icons based on asset type (Server, HardDrive, Container, Network, Box)
+  - Last updated timestamp (formatted with `date-fns`)
+  - Loading, error, and empty states
+  - Click to navigate to detail view
+- Data fetching: TanStack Query with `useApiClient`
+- Tests: Full coverage in `AssetList.test.tsx` and `AssetCard.test.tsx`
+
+**Asset Detail View** (`/assets/:id`):
+- Component: `AssetDetailPage`
+- Displays full asset information:
+  - Name, type, hostname
+  - Formatted JSON metadata viewer
+  - Created/updated timestamps
+  - Back navigation to list
+- Placeholder sections for future features (Logs, Actions)
+- Tests: Full coverage in `AssetDetailPage.test.tsx`
+
+**Testing Notes**:
+- All tests use `happy-dom` environment (specified via `// @vitest-environment happy-dom`)
+- Run with: `TZ=UTC VITE_CLERK_PUBLISHABLE_KEY=pk_test_mock bun x vitest run`
+- Timezone must be UTC to ensure consistent date formatting across environments
+- Full type safety from backend contracts
+
+### Frontend Testing
+
+#### Unit/Component Tests (Vitest)
+```bash
+bun test              # Run all tests
+bun test --watch      # Watch mode
+bun test --coverage   # Coverage report
+```
+
+**Testing setup**:
+- Vitest as test runner (Vite-native)
+- @testing-library/react for component testing
+- happy-dom for DOM simulation
+- Mock API calls using TanStack Query testing utilities
+
+#### E2E Tests (Playwright)
+```bash
+bun test:e2e          # Headless mode (CI)
+bun test:e2e:ui       # Interactive UI mode
+bun test:e2e:debug    # Step-through debugging
+bun test:e2e:report   # View HTML report
+```
+
+**Playwright configuration** (`playwright.config.ts`):
+- Tests in `e2e/` directory
+- Runs on Chromium, Firefox, and WebKit
+- Automatic dev server startup (port 3000)
+- Parallel execution enabled
+- Screenshots on failure
+- Traces on first retry
+
+**Writing E2E tests**:
+```typescript
+import { test, expect } from "@playwright/test";
+
+test("should authenticate and view assets", async ({ page }) => {
+  await page.goto("/");
+
+  // Use semantic selectors (role, label, text)
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  // Assertions
+  await expect(page.getByRole("heading", { name: "Assets" })).toBeVisible();
+});
+```
+
 ## Troubleshooting
+
+### Authentication 401 Errors
+
+**Symptom**: Frontend shows "Failed to load assets" or backend logs show "unauthorized: user not authenticated" even though user is logged in.
+
+**Root Causes and Fixes**:
+
+1. **Clerk SDK not initialized** (Backend)
+   - **Check**: Look for `clerk.SetKey(cfg.Auth.Clerk.SecretKey)` in `apps/backend/internal/server/server.go`
+   - **Fix**: Add initialization in `server.New()` function before any middleware setup
+   - **Verify**: Backend logs should show "token verification successful" when requests arrive
+
+2. **RequireAuth middleware missing** (Backend)
+   - **Check**: Verify `internal/router/v1/v1.go` has BOTH middlewares:
+     ```go
+     v1.Use(m.Auth.ClerkAuthMiddleware)  // Phase 1: Verify token
+     v1.Use(m.Auth.RequireAuth)          // Phase 2: Set user_id
+     ```
+   - **Symptom**: Logs show "JWT verified and claims stored" but then "user not authenticated"
+   - **Fix**: Add `v1.Use(m.Auth.RequireAuth)` after ClerkAuthMiddleware
+
+3. **JWT template mismatch** (Frontend/Backend)
+   - **Check**: Frontend uses template "api-test" in `apps/frontend/src/api/index.ts`
+   - **Check**: Clerk dashboard has JWT template named "api-test" configured
+   - **Fix**: Create template in Clerk dashboard or update frontend to match existing template name
+
+4. **Clerk configuration mismatch** (Backend)
+   - **Check**: `ARK_AUTH.CLERK.JWT_ISSUER` matches your Clerk instance
+   - **Example**: `https://ace-dinosaur-39.clerk.accounts.dev`
+   - **Verify**: Decode JWT token (jwt.io) and check `iss` claim matches backend config
+
+5. **Publishable key mismatch** (Frontend)
+   - **Check**: `VITE_CLERK_PUBLISHABLE_KEY` in `.env.local` matches backend's Clerk instance
+   - **Example**: `pk_test_YWNlLWRpbm9zYXVyLTM5...` should correspond to same Clerk app as backend secret key
+
+**Debug Steps**:
+```bash
+# 1. Check backend logs for authentication flow
+tail -f apps/backend/logs/app.log | grep -E "token verification|JWT verified|user not authenticated"
+
+# 2. Test token generation in browser console
+await window.Clerk.session.getToken({ template: "api-test" })
+
+# 3. Verify backend config
+grep -E "ARK_AUTH.CLERK" apps/backend/.env
+
+# 4. Check frontend config  
+cat apps/frontend/.env.local
+```
+
+### Frontend won't start or shows blank page
+
+**Check 1: Environment variables**
+```bash
+# Ensure .env.local exists and has required variables
+cat apps/frontend/.env.local
+
+# Should contain:
+# VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+# VITE_API_URL=http://localhost:8080
+# VITE_ENV=local
+
+# After changes, always restart:
+bun dev
+```
+
+**Check 2: Browser console errors**
+- Open DevTools (F12) → Console
+- `ReferenceError: process is not defined` → Using `process.env` instead of `import.meta.env`
+- `Invalid environment variables` → Missing or incorrect `.env.local`
+
+**Check 3: OpenAPI contracts**
+```bash
+# Rebuild contracts if needed
+cd packages/openapi && bun run build
+cd packages/zod && bun run build
+```
+
+### Clerk authentication errors
+
+**Invalid publishable key**:
+```bash
+# Verify you're using pk_test_... (publishable) not sk_test_... (secret)
+echo $VITE_CLERK_PUBLISHABLE_KEY
+
+# Get token in browser console to test:
+await window.Clerk.session.getToken({ template: "custom" })
+```
+
+**Backend JWT verification fails**:
+- Ensure backend has matching Clerk configuration
+- Check `ARK_AUTH.CLERK.SECRET_KEY` (backend) matches your Clerk app
+- Check `ARK_AUTH.CLERK.JWT_ISSUER` matches Clerk issuer
+- JWT template name must match on both sides (currently "custom", migrating to "api-test")
+
+### TypeScript errors after backend changes
+
+```bash
+# Rebuild shared packages
+cd packages/zod && bun run build
+cd ../openapi && bun run build
+
+# Type check frontend
+cd ../apps/frontend
+bun typecheck
+```
 
 ### Port already in use
 ```bash
@@ -482,6 +786,12 @@ rm -rf node_modules bun.lockb
 bun install
 ```
 
+
+- `package.json` correctly uses `@ark/openapi` and `@ark/zod`
+- **Action needed**: Update vite.config.ts aliases to match package.json dependencies
+
+These inconsistencies don't currently break functionality but should be addressed for clarity.
+
 ## Migration History
 
 **Note**: This project was migrated from `garden_journal` codebase. All plant/observation domain code has been replaced with asset/log equivalents. Module name is now `ark`, database name is `ark`.
@@ -509,5 +819,6 @@ bun install
 - **Redis**: 8+ (local installation required)
 - **Task**: Task runner for Go backend (install via `brew install go-task`)
 - **Tern**: Database migration tool (installed via Go modules)
+- **Playwright** (for E2E tests): Installed via `bun install`, browsers via `bunx playwright install`
 
 **Note**: Docker and Docker Compose are not yet configured. You must install PostgreSQL and Redis locally.

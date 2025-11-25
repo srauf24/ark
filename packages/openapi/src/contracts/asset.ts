@@ -1,6 +1,7 @@
 import { getSecurityMetadata } from "../utils.js";
 import {
     ZAsset,
+    ZAssetListResponse,
     ZCreateAssetRequest,
     ZUpdateAssetRequest,
     ZErrorResponse,
@@ -30,7 +31,7 @@ export const assetContract = c.router(
                 sort_order: z.enum(["asc", "desc"]).optional(),
             }),
             responses: {
-                200: schemaWithPagination(ZAsset),
+                200: ZAssetListResponse,
             },
             metadata: metadata,
         },
@@ -42,9 +43,7 @@ export const assetContract = c.router(
             description: "Create a new asset for the authenticated user",
             body: ZCreateAssetRequest,
             responses: {
-                201: z.object({
-                    data: ZAsset,
-                }),
+                201: ZAsset,
                 400: ZErrorResponse,
             },
             metadata: metadata,
@@ -59,9 +58,7 @@ export const assetContract = c.router(
                 id: ZUuid,
             }),
             responses: {
-                200: z.object({
-                    data: ZAsset,
-                }),
+                200: ZAsset,
                 404: ZErrorResponse,
             },
             metadata: metadata,
@@ -77,9 +74,7 @@ export const assetContract = c.router(
             }),
             body: ZUpdateAssetRequest,
             responses: {
-                200: z.object({
-                    data: ZAsset,
-                }),
+                200: ZAsset,
                 400: ZErrorResponse,
                 404: ZErrorResponse,
             },

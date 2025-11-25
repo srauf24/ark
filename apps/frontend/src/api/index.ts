@@ -1,5 +1,5 @@
 import { API_URL } from "@/config/env.ts";
-import { apiContract } from "@gardenjournal/openapi/contracts";
+import { apiContract } from "@ark/openapi/contracts";
 import { useAuth } from "@clerk/clerk-react";
 import { initClient } from "@ts-rest/core";
 import axios, {
@@ -24,14 +24,14 @@ export const useApiClient = ({ isBlob = false }: { isBlob?: boolean } = {}) => {
       "Content-Type": "application/json",
     },
     api: async ({ path, method, headers, body }) => {
-      const token = await getToken({ template: "custom" });
+      const token = await getToken({ template: "api-test" });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const makeRequest = async (retryCount = 0): Promise<any> => {
         try {
           const result = await axios.request({
             method: method as Method,
-            url: `${API_URL}/api${path}`,
+            url: `${API_URL}${path}`,
             headers: {
               ...headers,
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
