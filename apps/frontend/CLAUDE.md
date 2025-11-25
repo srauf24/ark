@@ -141,10 +141,10 @@ import { API_URL } from "@/config/env"
 
 **Configured aliases**:
 - `@/*` → `./src/*`
-- `@gardenjournal/openapi` → `../../packages/openapi/src` (legacy, should migrate to `@ark/openapi`)
-- `@gardenjournal/zod` → `../../packages/zod/src` (legacy, should migrate to `@ark/zod`)
+- `@ark/openapi` → `../../packages/openapi/src`
+- `@ark/zod` → `../../packages/zod/src`
 
-**Note**: The vite.config.ts still references `@gardenjournal/*` aliases from the previous codebase. These should be updated to `@ark/*` to match package.json dependencies.
+**Note**: The vite.config.ts has been updated to use `@ark/*` aliases.
 
 ### shadcn/ui Configuration
 
@@ -263,14 +263,7 @@ function MyForm() {
 }
 ```
 
-### Updating legacy package references
 
-The vite.config.ts still uses `@gardenjournal/*` aliases. To update:
-
-1. Replace `@gardenjournal/openapi` with `@ark/openapi`
-2. Replace `@gardenjournal/zod` with `@ark/zod`
-3. Update any import statements in source files
-4. Run `bun typecheck` to verify
 
 ## Code Style and Conventions
 
@@ -453,12 +446,14 @@ bun build
 
 ## Current State
 
-The frontend is in early development stages:
-- Basic React + Vite + TypeScript setup complete
-- API client and authentication infrastructure ready
-- shadcn/ui and TailwindCSS configured
-- Environment validation implemented
-- No UI components or routes implemented yet
+## Current State
+
+The frontend is in active development:
+- **Asset Management**: Full CRUD implemented (List, Create, Edit, Delete)
+- **Authentication**: Clerk integration with JWT injection and protected routes
+- **Architecture**: Type-safe API client, TanStack Query, and centralized hooks
+- **UI**: shadcn/ui components, responsive layout, and toast notifications
+- **Pending**: Log management UI, AI integration
 
 # Ark Frontend Guide
 
@@ -466,11 +461,10 @@ The frontend is in early development stages:
 The frontend for **Ark** is built with React, Vite, and Tailwind CSS. It provides a modern, responsive interface for managing assets and logs.
 
 **Next steps for development**:
-1. Update legacy `@gardenjournal/*` references to `@ark/*`
-2. Implement routing with React Router v7
-3. Create layouts and page components
-4. Add asset and log management UI
-5. Implement TanStack Query hooks for data fetching
+**Next steps for development**:
+1. Implement Log management UI (List, Create, Edit, Delete)
+2. Implement AI Query interface
+3. Add E2E tests for new features
 
 ## Design Principles
 

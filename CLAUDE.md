@@ -786,18 +786,7 @@ rm -rf node_modules bun.lockb
 bun install
 ```
 
-## Known Issues & Legacy References
 
-### Package Naming Inconsistency
-
-The monorepo was migrated from `garden_journal` to `ark`, but some legacy references remain:
-
-**Root `package.json`**:
-- Still shows `"name": "gardenjournal"` (line 2)
-- Should be updated to `"name": "ark"` to match the project
-
-**Frontend Vite Config** (`apps/frontend/vite.config.ts`):
-- Contains legacy aliases: `@gardenjournal/openapi`, `@gardenjournal/zod`
 - `package.json` correctly uses `@ark/openapi` and `@ark/zod`
 - **Action needed**: Update vite.config.ts aliases to match package.json dependencies
 

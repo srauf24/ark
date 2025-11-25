@@ -92,9 +92,8 @@ bashapps/backend/
 └── tests/
     ├── integration/           # Integration tests
     └── manual/                # Manual test files
-        ├── test_auth.http        # Authentication testing
-        ├── asset.http            # Asset CRUD (TO BE CREATED)
-        ├── log.http              # Log CRUD (TO BE CREATED)
+    └── manual/                # Manual test files
+        ├── test_auth.http        # Authentication & Asset/Log CRUD testing
         ├── ai.http               # AI queries (TO BE CREATED)
         └── e2e_ai_flow.http      # E2E AI flow (TO BE CREATED)
 Frontend Structure
@@ -182,10 +181,6 @@ GET    /health                     # Health check (database, redis)
 GET    /openapi.json               # OpenAPI specification
 ```
 
-**OLD Endpoints (TO BE REMOVED):**
-```
-❌ /api/v1/plants                  # DELETE - replaced by /assets
-❌ /api/v1/observations            # DELETE - replaced by /logs
 Request/Response Examples:
 json// AI Query Request
 {
