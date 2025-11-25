@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { ZCreateAssetRequest, ZUpdateAssetRequest } from "@ark/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,7 +50,24 @@ export function AssetForm({
     isPending: externalPending = false,
 }: AssetFormProps) {
     const mode = asset ? "edit" : "create";
-    const schema = mode === "edit" ? ZUpdateAssetRequest : ZCreateAssetRequest;
+
+    // Define form schema that handles metadata as a string
+    const formSchema = z.object({
+        name: z.string().min(1, "Name is required").max(100),
+        type: z.string().optional(),
+        hostname: z.string().max(255).optional(),
+        metadata: z.string().optional().superRefine((val, ctx) => {
+            if (!val || val.trim() === "") return;
+            try {
+                JSON.parse(val);
+            } catch (e) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: e instanceof Error ? e.message : "Invalid JSON format",
+                });
+            }
+        }),
+    });
 
     const createMutation = useCreateAsset();
     const updateMutation = useUpdateAsset();
@@ -63,7 +81,7 @@ export function AssetForm({
         hostname?: string;
         metadata?: string;
     }>({
-        resolver: zodResolver(schema),
+        resolver: zodResolver(formSchema),
         defaultValues: {
             name: asset?.name || "",
             type: asset?.type || undefined,
@@ -78,15 +96,7 @@ export function AssetForm({
 
         // Handle metadata field
         if (data.metadata && data.metadata.trim()) {
-            try {
-                parsedData.metadata = JSON.parse(data.metadata);
-            } catch (error) {
-                form.setError("metadata", {
-                    type: "manual",
-                    message: "Invalid JSON format",
-                });
-                return;
-            }
+            parsedData.metadata = JSON.parse(data.metadata);
         } else {
             // Remove empty metadata field
             delete parsedData.metadata;
@@ -258,7 +268,7 @@ export function AssetForm({
                 />
 
                 {/* Form Actions */}
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end items-center gap-3">
                     <Button
                         type="button"
                         variant="outline"
@@ -273,6 +283,6 @@ export function AssetForm({
                     </Button>
                 </div>
             </form>
-        </Form>
+        </Form >
     );
 }

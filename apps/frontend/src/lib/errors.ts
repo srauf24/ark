@@ -7,9 +7,10 @@ import { toast } from "sonner";
 interface ApiErrorResponse {
     status: number;
     body?: {
-        error?: string;
+        code?: string;
         message?: string;
-        details?: Record<string, string[]>;
+        errors?: Array<{ field: string; error: string }>;
+        details?: Record<string, string[]>; // Keep for backward compatibility if needed
     };
 }
 
@@ -20,6 +21,11 @@ export function getErrorMessage(error: unknown): string {
     // Handle API error responses
     if (error && typeof error === "object" && "status" in error) {
         const apiError = error as ApiErrorResponse;
+
+        // Use backend error message if available
+        if (apiError.body?.message) {
+            return apiError.body.message;
+        }
 
         switch (apiError.status) {
             case 400:
@@ -65,13 +71,22 @@ export function getFieldErrors(
     if (error && typeof error === "object" && "status" in error) {
         const apiError = error as ApiErrorResponse;
 
-        if (apiError.status === 400 && apiError.body?.details) {
-            // Convert array of errors to single string per field
+        if (apiError.status === 400 && apiError.body) {
+            console.log("[v1.1] Parsing field errors from body:", apiError.body);
             const fieldErrors: Record<string, string> = {};
 
-            for (const [field, messages] of Object.entries(apiError.body.details)) {
-                if (Array.isArray(messages) && messages.length > 0) {
-                    fieldErrors[field] = messages[0]; // Take first error message
+            // Handle backend "errors" array format
+            if (apiError.body.errors && Array.isArray(apiError.body.errors)) {
+                apiError.body.errors.forEach((err) => {
+                    fieldErrors[err.field] = err.error;
+                });
+            }
+            // Handle legacy "details" object format
+            else if (apiError.body.details) {
+                for (const [field, messages] of Object.entries(apiError.body.details)) {
+                    if (Array.isArray(messages) && messages.length > 0) {
+                        fieldErrors[field] = messages[0];
+                    }
                 }
             }
 

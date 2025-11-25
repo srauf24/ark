@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useApiClient } from "@/api";
-import { useQuery } from "@tanstack/react-query";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
@@ -31,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { AssetForm } from "@/components/assets/AssetForm";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
-import { useDeleteAsset } from "@/hooks/useAssets";
+import { useAsset, useDeleteAsset } from "@/hooks/useAssets";
 
 const getAssetIcon = (type: string | null | undefined): LucideIcon => {
     switch (type) {
@@ -46,29 +44,13 @@ const getAssetIcon = (type: string | null | undefined): LucideIcon => {
 
 export function AssetDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const apiClient = useApiClient();
     const navigate = useNavigate();
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const deleteMutation = useDeleteAsset();
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ["asset", id],
-        queryFn: async () => {
-            if (!id) throw new Error("Asset ID is required");
-            const response = await apiClient.Assets.getAssetById({
-                params: { id },
-            });
-
-            if (response.status !== 200) {
-                throw new Error("Failed to fetch asset");
-            }
-
-            return response.body.data;
-        },
-        enabled: !!id,
-    });
+    const { data, isLoading, isError, error } = useAsset(id || "");
 
     const handleDelete = () => {
         if (!id) return;

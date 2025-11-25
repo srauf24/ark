@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useApiClient } from "@/api";
-import { useQuery } from "@tanstack/react-query";
 import { AssetCard } from "./AssetCard";
 import { AssetForm } from "./AssetForm";
 import { Loader2, Plus } from "lucide-react";
@@ -15,24 +13,12 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
+import { useAssets } from "@/hooks/useAssets";
+
 export function AssetList() {
-    const apiClient = useApiClient();
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ["assets"],
-        queryFn: async () => {
-            const response = await apiClient.Assets.listAssets({
-                query: { limit: 100 },
-            });
-
-            if (response.status !== 200) {
-                throw new Error("Failed to fetch assets");
-            }
-
-            return response.body;
-        },
-    });
+    const { data, isLoading, isError } = useAssets({ limit: 100 });
 
     if (isLoading) {
         return (

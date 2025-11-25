@@ -58,7 +58,7 @@ export function useAsset(id: string) {
             });
 
             if (response.status === 200) {
-                return response.body.data;
+                return response.body;
             }
 
             throw new Error(`Failed to fetch asset ${id}`);
@@ -82,7 +82,7 @@ export function useCreateAsset() {
             });
 
             if (response.status === 201) {
-                return response.body.data;
+                return response.body;
             }
 
             throw new Error("Failed to create asset");
@@ -109,7 +109,7 @@ export function useUpdateAsset() {
             });
 
             if (response.status === 200) {
-                return response.body.data;
+                return response.body;
             }
 
             throw new Error(`Failed to update asset ${id}`);
