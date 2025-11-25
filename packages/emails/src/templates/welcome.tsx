@@ -24,12 +24,12 @@ export const WelcomeEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Welcome to gardenjournal</Preview>
+      <Preview>Welcome to Ark</Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans">
           <Container className="bg-white p-8 rounded-lg shadow-sm my-10 mx-auto max-w-[600px]">
             <Heading className="text-2xl font-bold text-gray-800 mt-4">
-              Welcome to gardenjournal!
+              Welcome to Ark!
             </Heading>
 
             <Section>
@@ -64,7 +64,7 @@ export const WelcomeEmail = ({
 
             <Section className="mt-8 text-center">
               <Text className="text-gray-500 text-xs">
-                © {new Date().getFullYear()} Alfred. All rights reserved.
+                © {new Date().getFullYear()} Ark. All rights reserved.
               </Text>
               <Text className="text-gray-500 text-xs">
                 123 Project Street, Suite 100, San Francisco, CA 94103

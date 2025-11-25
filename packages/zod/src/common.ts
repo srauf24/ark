@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Common Zod schemas for Garden Journal API
+ * Common Zod schemas for Ark API
  * These schemas are used across multiple resources
  */
 

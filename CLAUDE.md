@@ -2,9 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+# Ark Project Guide
 
-Ark is a production-ready monorepo for homelab asset tracking and configuration log management with AI-powered search capabilities. The project combines a Go backend (Echo framework) with a TypeScript/React frontend, organized using Turborepo for efficient builds and development.
+## Project Overview
+**Ark** is a self-hosted asset management system for homelabs. It allows users to track their hardware (servers, VMs, containers) and maintain a history of changes and logs.
+
+## Core Features
+- **Asset Management**: Track servers, VMs, containers, and network devices.
+- **Log History**: Maintain a chronological log of changes and maintenance tasks.
+- **Self-Hosted**: Designed to run in a homelab environment.
 
 **Core Use Case**: Track homelab infrastructure (servers, VMs, containers, network equipment) and maintain searchable logs of configuration changes. An AI assistant helps query logs using natural language.
 

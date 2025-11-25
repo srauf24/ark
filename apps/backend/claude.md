@@ -3,7 +3,10 @@
 > [!NOTE]
 > This project was migrated from the garden_journal codebase. The migration is complete - all plant/observation code has been replaced with asset/log equivalents. Module name updated to `ark`, database name is `ark`.
 
+# Ark Backend Guide
+
 ## Overview
+The backend for **Ark** is built with Go (Golang) using the Echo framework. It provides a RESTful API for the frontend.
 Ark is a homelab asset tracking and configuration log management application with AI-powered search. Built with Go (backend) and TypeScript/React (frontend) in a Turborepo monorepo.
 Core Use Case: Track servers, VMs, containers, and network equipment while maintaining searchable logs of configuration changes. AI assistant helps query logs in natural language.
 
