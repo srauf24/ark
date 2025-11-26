@@ -56,7 +56,14 @@ type IntegrationConfig struct {
 }
 
 type AuthConfig struct {
-	SecretKey string `koanf:"secret_key" validate:"required"`
+	SecretKey string      `koanf:"secret_key" validate:"required"`
+	Clerk     ClerkConfig `koanf:"clerk" validate:"required"`
+}
+
+type ClerkConfig struct {
+	SecretKey    string `koanf:"secret_key" validate:"required"`
+	JWTIssuer    string `koanf:"jwt_issuer" validate:"required,url"`
+	PEMPublicKey string `koanf:"pem_public_key"`
 }
 
 func parseMapString(value string) (map[string]string, bool) {
