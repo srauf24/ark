@@ -109,29 +109,31 @@ func TestLoadConfig_WithClerkPEMPublicKey(t *testing.T) {
 }
 
 func TestLoadConfig_WithUnderscoreEnvVars(t *testing.T) {
-	// Set up required environment variables using double underscore notation for hierarchy
+	// Set up required environment variables
+	// Note: We use dot notation for keys with underscores to avoid ambiguity
+	// e.g. ARK_SERVER.READ_TIMEOUT instead of ARK_SERVER_READ_TIMEOUT
 	envVars := map[string]string{
-		"ARK_PRIMARY__ENV":                 "test",
-		"ARK_SERVER__PORT":                 "8080",
-		"ARK_SERVER__READ_TIMEOUT":         "30",
-		"ARK_SERVER__WRITE_TIMEOUT":        "30",
-		"ARK_SERVER__IDLE_TIMEOUT":         "60",
-		"ARK_SERVER__CORS_ALLOWED_ORIGINS": "http://localhost:3000",
-		"ARK_DATABASE__HOST":               "localhost",
-		"ARK_DATABASE__PORT":               "5432",
-		"ARK_DATABASE__USER":               "postgres",
-		"ARK_DATABASE__PASSWORD":           "password",
-		"ARK_DATABASE__NAME":               "testdb",
-		"ARK_DATABASE__SSL_MODE":           "disable",
-		"ARK_DATABASE__MAX_OPEN_CONNS":     "25",
-		"ARK_DATABASE__MAX_IDLE_CONNS":     "25",
-		"ARK_DATABASE__CONN_MAX_LIFETIME":  "300",
-		"ARK_DATABASE__CONN_MAX_IDLE_TIME": "300",
-		"ARK_AUTH__SECRET_KEY":             "secret",
-		"ARK_AUTH__CLERK__SECRET_KEY":      "sk_test_1234567890",
-		"ARK_AUTH__CLERK__JWT_ISSUER":      "https://test-app.clerk.accounts.dev",
-		"ARK_INTEGRATION__RESEND_API_KEY":  "re_test_key",
-		"ARK_REDIS__ADDRESS":               "localhost:6379",
+		"ARK_PRIMARY.ENV":                 "test",
+		"ARK_SERVER.PORT":                 "8080",
+		"ARK_SERVER.READ_TIMEOUT":         "30",
+		"ARK_SERVER.WRITE_TIMEOUT":        "30",
+		"ARK_SERVER.IDLE_TIMEOUT":         "60",
+		"ARK_SERVER.CORS_ALLOWED_ORIGINS": "http://localhost:3000",
+		"ARK_DATABASE.HOST":               "localhost",
+		"ARK_DATABASE.PORT":               "5432",
+		"ARK_DATABASE.USER":               "postgres",
+		"ARK_DATABASE.PASSWORD":           "password",
+		"ARK_DATABASE.NAME":               "testdb",
+		"ARK_DATABASE.SSL_MODE":           "disable",
+		"ARK_DATABASE.MAX_OPEN_CONNS":     "25",
+		"ARK_DATABASE.MAX_IDLE_CONNS":     "25",
+		"ARK_DATABASE.CONN_MAX_LIFETIME":  "300",
+		"ARK_DATABASE.CONN_MAX_IDLE_TIME": "300",
+		"ARK_AUTH.SECRET_KEY":             "secret",
+		"ARK_AUTH.CLERK.SECRET_KEY":       "sk_test_1234567890",
+		"ARK_AUTH.CLERK.JWT_ISSUER":       "https://test-app.clerk.accounts.dev",
+		"ARK_INTEGRATION.RESEND_API_KEY":  "re_test_key",
+		"ARK_REDIS.ADDRESS":               "localhost:6379",
 	}
 
 	// Set environment variables
