@@ -7,11 +7,12 @@ import (
 	"os"
 	"time"
 
+	"ark/internal/config"
+
 	"github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/pkgerrors"
-	"ark/internal/config"
 )
 
 // LoggerService manages New Relic integration and logger creation
@@ -23,7 +24,7 @@ type LoggerService struct {
 func NewLoggerService(cfg *config.ObservabilityConfig) *LoggerService {
 	service := &LoggerService{}
 
-	if cfg.NewRelic.LicenseKey == "" {
+	if !cfg.NewRelic.Enabled || cfg.NewRelic.LicenseKey == "" {
 		return service
 	}
 

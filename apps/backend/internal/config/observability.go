@@ -20,7 +20,8 @@ type LoggingConfig struct {
 }
 
 type NewRelicConfig struct {
-	LicenseKey                string `koanf:"license_key" validate:"required"`
+	Enabled                   bool   `koanf:"enabled" env:"ARK_OBSERVABILITY_NEWRELIC_ENABLED"`
+	LicenseKey                string `koanf:"license_key" env:"ARK_OBSERVABILITY_NEWRELIC_LICENSEKEY"`
 	AppLogForwardingEnabled   bool   `koanf:"app_log_forwarding_enabled"`
 	DistributedTracingEnabled bool   `koanf:"distributed_tracing_enabled"`
 	DebugLogging              bool   `koanf:"debug_logging"`
