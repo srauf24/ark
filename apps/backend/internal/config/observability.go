@@ -6,11 +6,11 @@ import (
 )
 
 type ObservabilityConfig struct {
-	ServiceName  string             `koanf:"service_name" validate:"required"`
-	Environment  string             `koanf:"environment" validate:"required"`
-	Logging      LoggingConfig      `koanf:"logging" validate:"required"`
-	NewRelic     NewRelicConfig     `koanf:"new_relic" validate:"required"`
-	HealthChecks HealthChecksConfig `koanf:"health_checks" validate:"required"`
+	ServiceName  string             `koanf:"service_name"`
+	Environment  string             `koanf:"environment"`
+	Logging      LoggingConfig      `koanf:"logging"`
+	NewRelic     NewRelicConfig     `koanf:"new_relic"`
+	HealthChecks HealthChecksConfig `koanf:"health_checks"`
 }
 
 type LoggingConfig struct {
@@ -20,7 +20,7 @@ type LoggingConfig struct {
 }
 
 type NewRelicConfig struct {
-	LicenseKey                string `koanf:"license_key" validate:"required"`
+	LicenseKey                string `koanf:"license_key"`
 	AppLogForwardingEnabled   bool   `koanf:"app_log_forwarding_enabled"`
 	DistributedTracingEnabled bool   `koanf:"distributed_tracing_enabled"`
 	DebugLogging              bool   `koanf:"debug_logging"`

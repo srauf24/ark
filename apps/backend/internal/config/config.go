@@ -192,13 +192,7 @@ func LoadConfig() (*Config, error) {
 		logger.Fatal().Err(err).Msg("could not unmarshal config")
 	}
 
-	validate := validator.New()
-
-	if err := validate.Struct(mainConfig); err != nil {
-		logger.Fatal().Err(err).Msg("config validation failed")
-	}
-
-	// Apply defaults for observability
+	// Apply defaults
 	if mainConfig.Observability == nil {
 		mainConfig.Observability = DefaultObservabilityConfig()
 	}
@@ -207,9 +201,15 @@ func LoadConfig() (*Config, error) {
 	mainConfig.Observability.ServiceName = "ark"
 	mainConfig.Observability.Environment = mainConfig.Primary.Env
 
-	// Validate observability config
+	// Validate observability config (custom validation)
 	if err := mainConfig.Observability.Validate(); err != nil {
 		logger.Fatal().Err(err).Msg("invalid observability config")
+	}
+
+	// Validate main config struct
+	validate := validator.New()
+	if err := validate.Struct(mainConfig); err != nil {
+		logger.Fatal().Err(err).Msg("config validation failed")
 	}
 
 	return mainConfig, nil
