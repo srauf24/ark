@@ -143,21 +143,42 @@ func LoadConfig() (*Config, error) {
 
 	// Load ARK_* env vars into koanf
 	err := k.Load(env.ProviderWithValue("ARK_", ".", func(key, value string) (string, any) {
-		// Clean up the key: ARK_SERVER_PORT -> server.port
-		k := strings.ToLower(strings.TrimPrefix(key, "ARK_"))
-		k = strings.ReplaceAll(k, "_", ".")
+		// Strip prefix: ARK_SOMETHING -> SOMETHING
+		clean := strings.TrimPrefix(key, "ARK_")
+		clean = strings.TrimPrefix(clean, "ark_") // safety
 
-		// Check if it's a map and parse it directly here
+		// Support both formats:
+		// 1) ARK_OBSERVABILITY.LOGGING.LEVEL
+		// 2) ARK_OBSERVABILITY_LOGGING_LEVEL
+
+		// Normalize everything to lowercase
+		clean = strings.ToLower(clean)
+
+		// Replace ALL sequences of [._] with "."
+		// e.g. observability.logging.level
+		//      observability_logging_level
+		//      observability__logging--level
+		// ALL normalize to observability.logging.level
+		clean = strings.ReplaceAll(clean, "__", ".")
+		clean = strings.ReplaceAll(clean, "_", ".")
+		clean = strings.ReplaceAll(clean, "..", ".")
+		clean = strings.ReplaceAll(clean, "-", ".") // optional safety
+
+		// Now we have correct nested keys
+		// observability.logging.level
+		// database.host
+		// auth.clerk.secret_key
+
+		// Parse nested map strings (if used)
 		if mapData, isMap := parseMapString(value); isMap {
-			return k, mapData
+			return clean, mapData
 		}
 
-		// Otherwise return the raw value
-		return k, value
+		return clean, value
 	}), nil)
 
 	if err != nil {
-		logger.Fatal().Err(err).Msg("could not load initial ARK_ environment variables")
+		logger.Fatal().Err(err).Msg("could not load ARK_ environment variables")
 	}
 
 	mainConfig := &Config{}
@@ -170,16 +191,14 @@ func LoadConfig() (*Config, error) {
 
 	if err := validate.Struct(mainConfig); err != nil {
 		logger.Fatal().Err(err).Msg("config validation failed")
-	} else {
-		logger.Info().Msg("config validation passed")
 	}
 
-	// Set default observability config if not provided
+	// Apply defaults for observability
 	if mainConfig.Observability == nil {
 		mainConfig.Observability = DefaultObservabilityConfig()
 	}
 
-	// Override service name and environment from primary config
+	// Override service & environment
 	mainConfig.Observability.ServiceName = "ark"
 	mainConfig.Observability.Environment = mainConfig.Primary.Env
 
