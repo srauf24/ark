@@ -47,7 +47,8 @@ type DatabaseConfig struct {
 }
 
 type RedisConfig struct {
-	Address string `koanf:"address" validate:"required"`
+	Address  string `koanf:"address" validate:"required"`
+	Password string `koanf:"password"`
 }
 
 type IntegrationConfig struct {
@@ -142,8 +143,9 @@ func LoadConfig() (*Config, error) {
 
 	// Load ARK_* env vars into koanf
 	err := k.Load(env.ProviderWithValue("ARK_", ".", func(key, value string) (string, any) {
-		// Clean up the key: ARK_REDIS -> redis
+		// Clean up the key: ARK_SERVER_PORT -> server.port
 		k := strings.ToLower(strings.TrimPrefix(key, "ARK_"))
+		k = strings.ReplaceAll(k, "_", ".")
 
 		// Check if it's a map and parse it directly here
 		if mapData, isMap := parseMapString(value); isMap {
