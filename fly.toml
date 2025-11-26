@@ -1,0 +1,78 @@
+# Fly.io configuration for Ark backend
+app = "ark-backend"
+primary_region = "iad"
+
+[build]
+  dockerfile = "apps/backend/Dockerfile"
+
+[env]
+  ARK_PRIMARY.ENV = "production"
+  ARK_SERVER.PORT = "8080"
+  ARK_SERVER.READ_TIMEOUT = "30"
+  ARK_SERVER.WRITE_TIMEOUT = "30"
+  ARK_SERVER.IDLE_TIMEOUT = "60"
+  ARK_DATABASE.MAX_OPEN_CONNS = "25"
+  ARK_DATABASE.MAX_IDLE_CONNS = "25"
+  ARK_DATABASE.CONN_MAX_LIFETIME = "300"
+  ARK_DATABASE.CONN_MAX_IDLE_TIME = "300"
+  ARK_OBSERVABILITY.SERVICE_NAME = "ark"
+  ARK_OBSERVABILITY.ENVIRONMENT = "production"
+  ARK_OBSERVABILITY.LOGGING.LEVEL = "info"
+  ARK_OBSERVABILITY.LOGGING.FORMAT = "json"
+  ARK_OBSERVABILITY.LOGGING.SLOW_QUERY_THRESHOLD = "100ms"
+  ARK_OBSERVABILITY.NEW_RELIC.APP_LOG_FORWARDING_ENABLED = "true"
+  ARK_OBSERVABILITY.NEW_RELIC.DISTRIBUTED_TRACING_ENABLED = "true"
+  ARK_OBSERVABILITY.NEW_RELIC.DEBUG_LOGGING = "false"
+  ARK_OBSERVABILITY.HEALTH_CHECKS.ENABLED = "true"
+  ARK_OBSERVABILITY.HEALTH_CHECKS.INTERVAL = "30s"
+  ARK_OBSERVABILITY.HEALTH_CHECKS.TIMEOUT = "5s"
+  ARK_OBSERVABILITY.HEALTH_CHECKS.CHECKS = "database,redis"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+
+[mounts]
+  source = "ark_data"
+  destination = "/data"

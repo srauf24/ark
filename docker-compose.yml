@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: ark-postgres
+    environment:
+      POSTGRES_USER: ark_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ark
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ark_user -d ark"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:8-alpine
+    container_name: ark-redis
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: ark-backend
+    environment:
+      # Primary
+      ARK_PRIMARY.ENV: ${ARK_ENV:-production}
+
+      # Server
+      ARK_SERVER.PORT: "8080"
+      ARK_SERVER.READ_TIMEOUT: "30"
+      ARK_SERVER.WRITE_TIMEOUT: "30"
+      ARK_SERVER.IDLE_TIMEOUT: "60"
+      ARK_SERVER.CORS_ALLOWED_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+
+      # Database
+      ARK_DATABASE.HOST: postgres
+      ARK_DATABASE.PORT: "5432"
+      ARK_DATABASE.USER: ark_user
+      ARK_DATABASE.PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      ARK_DATABASE.NAME: ark
+      ARK_DATABASE.SSL_MODE: disable
+      ARK_DATABASE.MAX_OPEN_CONNS: "25"
+      ARK_DATABASE.MAX_IDLE_CONNS: "25"
+      ARK_DATABASE.CONN_MAX_LIFETIME: "300"
+      ARK_DATABASE.CONN_MAX_IDLE_TIME: "300"
+
+      # Auth
+      ARK_AUTH.SECRET_KEY: ${ARK_AUTH_SECRET_KEY:?Error: ARK_AUTH_SECRET_KEY is required}
+      ARK_AUTH.CLERK.SECRET_KEY: ${CLERK_SECRET_KEY:?Error: CLERK_SECRET_KEY is required}
+      ARK_AUTH.CLERK.JWT_ISSUER: ${CLERK_JWT_ISSUER:?Error: CLERK_JWT_ISSUER is required}
+
+      # Redis
+      ARK_REDIS.ADDRESS: redis:6379
+      ARK_REDIS.PASSWORD: ${REDIS_PASSWORD:-}
+
+      # Integrations
+      ARK_INTEGRATION.RESEND_API_KEY: ${RESEND_API_KEY:?Error: RESEND_API_KEY is required}
+
+      # Observability
+      ARK_OBSERVABILITY.SERVICE_NAME: ark
+      ARK_OBSERVABILITY.ENVIRONMENT: ${ARK_ENV:-production}
+      ARK_OBSERVABILITY.LOGGING.LEVEL: ${LOG_LEVEL:-info}
+      ARK_OBSERVABILITY.LOGGING.FORMAT: json
+      ARK_OBSERVABILITY.LOGGING.SLOW_QUERY_THRESHOLD: 100ms
+      ARK_OBSERVABILITY.NEW_RELIC.LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+      ARK_OBSERVABILITY.NEW_RELIC.APP_LOG_FORWARDING_ENABLED: "true"
+      ARK_OBSERVABILITY.NEW_RELIC.DISTRIBUTED_TRACING_ENABLED: "true"
+      ARK_OBSERVABILITY.NEW_RELIC.DEBUG_LOGGING: "false"
+      ARK_OBSERVABILITY.HEALTH_CHECKS.ENABLED: "true"
+      ARK_OBSERVABILITY.HEALTH_CHECKS.INTERVAL: 30s
+      ARK_OBSERVABILITY.HEALTH_CHECKS.TIMEOUT: 5s
+      ARK_OBSERVABILITY.HEALTH_CHECKS.CHECKS: database,redis
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:?Error: CLERK_PUBLISHABLE_KEY is required}
+        VITE_ENV: ${ARK_ENV:-production}
+    container_name: ark-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

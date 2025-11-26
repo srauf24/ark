@@ -1,0 +1,66 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+LICENSE
+DEPLOYMENT.md
+CLAUDE.md
+
+# CI/CD
+.github
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.sample
+!.env.docker.example
+
+# Dependencies
+node_modules
+vendor
+
+# Build artifacts
+dist
+build
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+logs
+
+# Test files
+*_test.go
+**/*.test.tsx
+**/*.test.ts
+e2e/
+playwright-report/
+test-results/
+coverage/
+
+# Temporary
+tmp
+temp
+.cache
+
+# Package manager
+bun.lockb
+package-lock.json
+yarn.lock

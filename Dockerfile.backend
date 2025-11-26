@@ -1,0 +1,39 @@
+# Multi-stage Dockerfile for backend (build from repo root)
+# Usage: docker build -f Dockerfile.backend -t ark-backend .
+
+# Build stage
+FROM golang:1.24-alpine AS builder
+
+RUN apk add --no-cache git make
+
+WORKDIR /app
+
+# Copy go mod files
+COPY apps/backend/go.mod apps/backend/go.sum ./
+RUN go mod download
+
+# Copy backend source
+COPY apps/backend ./
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
+
+# Run stage
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /root/
+
+# Copy binary
+COPY --from=builder /app/main .
+
+# Copy migrations
+COPY --from=builder /app/internal/database/migrations ./internal/database/migrations
+
+# Copy static files
+COPY --from=builder /app/static ./static
+
+EXPOSE 8080
+
+CMD ["./main"]

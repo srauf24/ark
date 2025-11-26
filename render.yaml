@@ -1,0 +1,128 @@
+# Render Blueprint for Ark
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Backend API
+  - type: web
+    name: ark-backend
+    env: go
+    region: oregon
+    plan: starter
+    buildCommand: cd apps/backend && go build -o main ./cmd/api
+    startCommand: cd apps/backend && ./main
+    dockerfilePath: apps/backend/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ARK_PRIMARY.ENV
+        value: production
+      - key: ARK_SERVER.PORT
+        value: 8080
+      - key: ARK_SERVER.READ_TIMEOUT
+        value: 30
+      - key: ARK_SERVER.WRITE_TIMEOUT
+        value: 30
+      - key: ARK_SERVER.IDLE_TIMEOUT
+        value: 60
+      - key: ARK_SERVER.CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: ARK_DATABASE.HOST
+        fromDatabase:
+          name: ark-postgres
+          property: host
+      - key: ARK_DATABASE.PORT
+        fromDatabase:
+          name: ark-postgres
+          property: port
+      - key: ARK_DATABASE.USER
+        fromDatabase:
+          name: ark-postgres
+          property: user
+      - key: ARK_DATABASE.PASSWORD
+        fromDatabase:
+          name: ark-postgres
+          property: password
+      - key: ARK_DATABASE.NAME
+        fromDatabase:
+          name: ark-postgres
+          property: database
+      - key: ARK_DATABASE.SSL_MODE
+        value: require
+      - key: ARK_DATABASE.MAX_OPEN_CONNS
+        value: 25
+      - key: ARK_DATABASE.MAX_IDLE_CONNS
+        value: 25
+      - key: ARK_DATABASE.CONN_MAX_LIFETIME
+        value: 300
+      - key: ARK_DATABASE.CONN_MAX_IDLE_TIME
+        value: 300
+      - key: ARK_AUTH.SECRET_KEY
+        generateValue: true
+      - key: ARK_AUTH.CLERK.SECRET_KEY
+        sync: false
+      - key: ARK_AUTH.CLERK.JWT_ISSUER
+        sync: false
+      - key: ARK_REDIS.ADDRESS
+        fromService:
+          type: redis
+          name: ark-redis
+          property: connectionString
+      - key: ARK_INTEGRATION.RESEND_API_KEY
+        sync: false
+      - key: ARK_OBSERVABILITY.SERVICE_NAME
+        value: ark
+      - key: ARK_OBSERVABILITY.ENVIRONMENT
+        value: production
+      - key: ARK_OBSERVABILITY.LOGGING.LEVEL
+        value: info
+      - key: ARK_OBSERVABILITY.LOGGING.FORMAT
+        value: json
+      - key: ARK_OBSERVABILITY.LOGGING.SLOW_QUERY_THRESHOLD
+        value: 100ms
+      - key: ARK_OBSERVABILITY.NEW_RELIC.LICENSE_KEY
+        sync: false
+      - key: ARK_OBSERVABILITY.NEW_RELIC.APP_LOG_FORWARDING_ENABLED
+        value: true
+      - key: ARK_OBSERVABILITY.NEW_RELIC.DISTRIBUTED_TRACING_ENABLED
+        value: true
+      - key: ARK_OBSERVABILITY.NEW_RELIC.DEBUG_LOGGING
+        value: false
+      - key: ARK_OBSERVABILITY.HEALTH_CHECKS.ENABLED
+        value: true
+      - key: ARK_OBSERVABILITY.HEALTH_CHECKS.INTERVAL
+        value: 30s
+      - key: ARK_OBSERVABILITY.HEALTH_CHECKS.TIMEOUT
+        value: 5s
+      - key: ARK_OBSERVABILITY.HEALTH_CHECKS.CHECKS
+        value: database,redis
+
+  # Frontend
+  - type: web
+    name: ark-frontend
+    env: static
+    region: oregon
+    plan: starter
+    buildCommand: cd apps/frontend && bun install && bun run build
+    staticPublishPath: apps/frontend/dist
+    pullRequestPreviewsEnabled: true
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: ark-backend
+          property: host
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_ENV
+        value: production
+
+databases:
+  - name: ark-postgres
+    databaseName: ark
+    plan: starter
+    region: oregon
+    postgresMajorVersion: 16
+
+  - name: ark-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: noeviction

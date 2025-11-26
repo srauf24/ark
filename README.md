@@ -97,6 +97,33 @@ task run
 
 The API will be available at `http://localhost:8080`
 
+## Deployment
+
+Ark can be deployed to various platforms including Railway, Render, Fly.io, or self-hosted with Docker Compose.
+
+**Quick Deploy with Docker Compose:**
+```bash
+# Copy environment template
+cp .env.docker.example .env
+
+# Edit with your credentials
+nano .env
+
+# Start all services (PostgreSQL, Redis, Backend, Frontend)
+docker compose up -d
+```
+
+**For detailed deployment instructions**, including platform-specific guides for Railway, Render, Fly.io, DigitalOcean, and self-hosted VPS options, see:
+
+👉 **[DEPLOYMENT.md](./DEPLOYMENT.md)**
+
+The deployment guide covers:
+- Docker Compose setup (recommended for homelab/self-hosting)
+- Platform-specific configurations (Railway, Render, Fly.io, etc.)
+- Environment variable requirements
+- Troubleshooting common deployment issues
+- Cost comparisons for different platforms
+
 ## Development
 
 ### Available Commands
