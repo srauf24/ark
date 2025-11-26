@@ -193,8 +193,28 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Apply defaults
+	// Apply defaults
+	defaults := DefaultObservabilityConfig()
 	if mainConfig.Observability == nil {
-		mainConfig.Observability = DefaultObservabilityConfig()
+		mainConfig.Observability = defaults
+	} else {
+		// Merge defaults for missing fields
+		if mainConfig.Observability.Logging.Level == "" {
+			mainConfig.Observability.Logging.Level = defaults.Logging.Level
+		}
+		if mainConfig.Observability.Logging.Format == "" {
+			mainConfig.Observability.Logging.Format = defaults.Logging.Format
+		}
+		if mainConfig.Observability.Logging.SlowQueryThreshold == 0 {
+			mainConfig.Observability.Logging.SlowQueryThreshold = defaults.Logging.SlowQueryThreshold
+		}
+		// Ensure HealthChecks defaults are applied if not set
+		if mainConfig.Observability.HealthChecks.Interval == 0 {
+			mainConfig.Observability.HealthChecks.Interval = defaults.HealthChecks.Interval
+		}
+		if mainConfig.Observability.HealthChecks.Timeout == 0 {
+			mainConfig.Observability.HealthChecks.Timeout = defaults.HealthChecks.Timeout
+		}
 	}
 
 	// Override service & environment
