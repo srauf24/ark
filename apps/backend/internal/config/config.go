@@ -154,15 +154,18 @@ func LoadConfig() (*Config, error) {
 		// Normalize everything to lowercase
 		clean = strings.ToLower(clean)
 
-		// Replace ALL sequences of [._] with "."
-		// e.g. observability.logging.level
-		//      observability_logging_level
-		//      observability__logging--level
-		// ALL normalize to observability.logging.level
+		// Replace double underscores with dots for hierarchy
+		// e.g. ARK_SERVER__READ_TIMEOUT -> server.read_timeout
 		clean = strings.ReplaceAll(clean, "__", ".")
-		clean = strings.ReplaceAll(clean, "_", ".")
+
+		// Replace double dots with single dot (safety)
 		clean = strings.ReplaceAll(clean, "..", ".")
-		clean = strings.ReplaceAll(clean, "-", ".") // optional safety
+
+		// Replace hyphens with dots (optional safety)
+		clean = strings.ReplaceAll(clean, "-", ".")
+
+		// Note: We DO NOT replace single underscores with dots anymore
+		// This preserves snake_case keys like read_timeout
 
 		// Now we have correct nested keys
 		// observability.logging.level

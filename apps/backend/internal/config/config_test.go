@@ -108,6 +108,51 @@ func TestLoadConfig_WithClerkPEMPublicKey(t *testing.T) {
 	assert.Contains(t, cfg.Auth.Clerk.PEMPublicKey, "BEGIN PUBLIC KEY", "PEM public key should contain valid PEM format")
 }
 
+func TestLoadConfig_WithUnderscoreEnvVars(t *testing.T) {
+	// Set up required environment variables using double underscore notation for hierarchy
+	envVars := map[string]string{
+		"ARK_PRIMARY__ENV":                 "test",
+		"ARK_SERVER__PORT":                 "8080",
+		"ARK_SERVER__READ_TIMEOUT":         "30",
+		"ARK_SERVER__WRITE_TIMEOUT":        "30",
+		"ARK_SERVER__IDLE_TIMEOUT":         "60",
+		"ARK_SERVER__CORS_ALLOWED_ORIGINS": "http://localhost:3000",
+		"ARK_DATABASE__HOST":               "localhost",
+		"ARK_DATABASE__PORT":               "5432",
+		"ARK_DATABASE__USER":               "postgres",
+		"ARK_DATABASE__PASSWORD":           "password",
+		"ARK_DATABASE__NAME":               "testdb",
+		"ARK_DATABASE__SSL_MODE":           "disable",
+		"ARK_DATABASE__MAX_OPEN_CONNS":     "25",
+		"ARK_DATABASE__MAX_IDLE_CONNS":     "25",
+		"ARK_DATABASE__CONN_MAX_LIFETIME":  "300",
+		"ARK_DATABASE__CONN_MAX_IDLE_TIME": "300",
+		"ARK_AUTH__SECRET_KEY":             "secret",
+		"ARK_AUTH__CLERK__SECRET_KEY":      "sk_test_1234567890",
+		"ARK_AUTH__CLERK__JWT_ISSUER":      "https://test-app.clerk.accounts.dev",
+		"ARK_INTEGRATION__RESEND_API_KEY":  "re_test_key",
+		"ARK_REDIS__ADDRESS":               "localhost:6379",
+	}
+
+	// Set environment variables
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+	defer func() {
+		for key := range envVars {
+			os.Unsetenv(key)
+		}
+	}()
+
+	cfg, err := LoadConfig()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Verify a few key fields are loaded correctly
+	assert.Equal(t, "sk_test_1234567890", cfg.Auth.Clerk.SecretKey)
+	assert.Equal(t, "https://test-app.clerk.accounts.dev", cfg.Auth.Clerk.JWTIssuer)
+}
+
 // Note: Negative test cases (missing/invalid config) are not included here
 // because LoadConfig() calls logger.Fatal() which executes os.Exit(1)
 // instead of panicking. This cannot be reliably tested with standard Go testing.
