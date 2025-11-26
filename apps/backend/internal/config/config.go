@@ -45,6 +45,7 @@ type DatabaseConfig struct {
 	ConnMaxLifetime int    `koanf:"conn_max_lifetime" validate:"required"`
 	ConnMaxIdleTime int    `koanf:"conn_max_idle_time" validate:"required"`
 }
+
 type RedisConfig struct {
 	Address string `koanf:"address" validate:"required"`
 }
@@ -64,30 +65,111 @@ type ClerkConfig struct {
 	PEMPublicKey string `koanf:"pem_public_key"`
 }
 
+func parseMapString(value string) (map[string]string, bool) {
+	if !strings.HasPrefix(value, "map[") || !strings.HasSuffix(value, "]") {
+		return nil, false
+	}
+
+	content := strings.TrimPrefix(value, "map[")
+	content = strings.TrimSuffix(content, "]")
+
+	if content == "" {
+		return make(map[string]string), true
+	}
+
+	result := make(map[string]string)
+	i := 0
+
+	for i < len(content) {
+		keyStart := i
+		for i < len(content) && content[i] != ':' {
+			i++
+		}
+		if i >= len(content) {
+			break
+		}
+
+		key := strings.TrimSpace(content[keyStart:i])
+		i++
+
+		valueStart := i
+
+		// detect nested map
+		if i+4 <= len(content) && content[i:i+4] == "map[" {
+			bracketCount := 0
+			for i < len(content) {
+				if i+4 <= len(content) && content[i:i+4] == "map[" {
+					bracketCount++
+					i += 4
+				} else if content[i] == ']' {
+					bracketCount--
+					i++
+					if bracketCount == 0 {
+						break
+					}
+				} else {
+					i++
+				}
+			}
+		} else {
+			for i < len(content) && content[i] != ' ' {
+				i++
+			}
+		}
+
+		v := strings.TrimSpace(content[valueStart:i])
+
+		if nested, ok := parseMapString(v); ok {
+			for mk, mv := range nested {
+				result[key+"."+mk] = mv
+			}
+		} else {
+			result[key] = v
+		}
+
+		for i < len(content) && content[i] == ' ' {
+			i++
+		}
+	}
+
+	return result, true
+}
+
 func LoadConfig() (*Config, error) {
 	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
 
 	k := koanf.New(".")
 
-	err := k.Load(env.Provider("ARK_", ".", func(s string) string {
-		return strings.ToLower(strings.TrimPrefix(s, "ARK_"))
+	// Load ARK_* env vars into koanf
+	err := k.Load(env.ProviderWithValue("ARK_", ".", func(key, value string) (string, any) {
+		// Clean up the key: ARK_REDIS -> redis
+		k := strings.ToLower(strings.TrimPrefix(key, "ARK_"))
+
+		// Check if it's a map and parse it directly here
+		if mapData, isMap := parseMapString(value); isMap {
+			return k, mapData
+		}
+
+		// Otherwise return the raw value
+		return k, value
 	}), nil)
+
 	if err != nil {
-		logger.Fatal().Err(err).Msg("could not load initial env variables")
+		logger.Fatal().Err(err).Msg("could not load initial ARK_ environment variables")
 	}
 
 	mainConfig := &Config{}
 
-	err = k.Unmarshal("", mainConfig)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("could not unmarshal main config")
+	if err := k.Unmarshal("", mainConfig); err != nil {
+		logger.Fatal().Err(err).Msg("could not unmarshal config")
 	}
 
 	validate := validator.New()
 
-	err = validate.Struct(mainConfig)
-	if err != nil {
+	if err := validate.Struct(mainConfig); err != nil {
 		logger.Fatal().Err(err).Msg("config validation failed")
+	} else {
+		logger.Info().Msg("config validation passed")
 	}
 
 	// Set default observability config if not provided
