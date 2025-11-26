@@ -62,7 +62,7 @@ type AuthConfig struct {
 
 type ClerkConfig struct {
 	SecretKey    string `koanf:"secret_key" validate:"required"`
-	JWTIssuer    string `koanf:"jwt_issuer" validate:"required,url"`
+	JWTIssuer    string `koanf:"jwt_issuer"`
 	PEMPublicKey string `koanf:"pem_public_key"`
 }
 
