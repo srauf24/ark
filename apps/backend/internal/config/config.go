@@ -154,7 +154,7 @@ func LoadConfig() (*Config, error) {
 		// Normalize everything to lowercase
 		clean = strings.ToLower(clean)
 
-		// Replace double underscores with dots for hierarchy
+		// Replace double underscores with dots for hierarchy (optional support)
 		// e.g. ARK_SERVER__READ_TIMEOUT -> server.read_timeout
 		clean = strings.ReplaceAll(clean, "__", ".")
 
@@ -164,8 +164,10 @@ func LoadConfig() (*Config, error) {
 		// Replace hyphens with dots (optional safety)
 		clean = strings.ReplaceAll(clean, "-", ".")
 
-		// Note: We DO NOT replace single underscores with dots anymore
-		// This preserves snake_case keys like read_timeout
+		// IMPORTANT: We DO NOT replace single underscores with dots.
+		// This ensures keys like 'read_timeout' are preserved as 'read_timeout',
+		// not 'read.timeout'.
+		// Users MUST use dot notation for hierarchy: ARK_SERVER.READ_TIMEOUT)
 
 		// Now we have correct nested keys
 		// observability.logging.level
