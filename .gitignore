@@ -54,5 +54,7 @@ yarn-error.log*
 
 tsconfig.tsbuildinfo
 .env
+.env.local
+.env.production
 .turbo
 .vscode
