@@ -1,0 +1,103 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ark}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ark}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ark} -d ${POSTGRES_DB:-ark}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ark-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ark-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      # Database
+      ARK_DATABASE_HOST: postgres
+      ARK_DATABASE_PORT: 5432
+      ARK_DATABASE_USER: ${POSTGRES_USER:-ark}
+      ARK_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      ARK_DATABASE_NAME: ${POSTGRES_DB:-ark}
+      ARK_DATABASE_SSLMODE: disable
+      # Redis
+      ARK_REDIS_HOST: redis
+      ARK_REDIS_PORT: 6379
+      # Server
+      ARK_SERVER_HOST: 0.0.0.0
+      ARK_SERVER_PORT: 8080
+      # Auth (Clerk)
+      ARK_AUTH_CLERK_SECRETKEY: ${CLERK_SECRET_KEY}
+      ARK_AUTH_CLERK_JWTISSUER: ${CLERK_JWT_ISSUER}
+      # Observability (hardcoded sensible defaults)
+      ARK_OBSERVABILITY_LOGGING_LEVEL: info
+      ARK_OBSERVABILITY_LOGGING_FORMAT: json
+      ARK_OBSERVABILITY_NEWRELIC_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ark-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: https://api.arkcore.dev
+      VITE_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
+    networks:
+      - ark-network
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - ark-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+
+
+networks:
+  ark-network:
+    driver: bridge

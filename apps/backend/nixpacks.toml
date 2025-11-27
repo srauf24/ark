@@ -1,0 +1,17 @@
+[phases.setup]
+nixPkgs = ['go']
+
+[phases.install]
+cmds = ['go mod download']
+
+[phases.build]
+cmds = [
+    'go build -o ark ./cmd/ark',
+]
+
+[start]
+cmd = './ark'
+
+[variables]
+GO111MODULE = 'on'
+CGO_ENABLED = '0'

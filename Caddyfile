@@ -1,0 +1,40 @@
+# API backend
+api.arkcore.dev {
+    reverse_proxy backend:8080
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+    }
+
+    encode gzip
+
+    log {
+        output stdout
+        format json
+    }
+}
+
+# Frontend
+arkcore.dev {
+    reverse_proxy frontend:3000
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        X-XSS-Protection "1; mode=block"
+    }
+
+    encode gzip
+
+    log {
+        output stdout
+        format json
+    }
+}
+
+# Redirect www to non-www
+www.arkcore.dev {
+    redir https://arkcore.dev{uri} permanent
+}
