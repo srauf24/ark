@@ -7,6 +7,7 @@ import (
 )
 
 func RegisterSystemRoutes(r *echo.Echo, h *handler.Handlers) {
+	r.GET("/health", h.Health.CheckHealth)
 	r.GET("/api/status", h.Health.CheckHealth)
 
 	r.Static("/static", "static")
