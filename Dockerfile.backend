@@ -35,7 +35,7 @@ WORKDIR /app
 COPY --from=builder /build/ark .
 
 # Copy migrations if they exist
-COPY --from=builder /build/migrations ./migrations/
+COPY --from=builder /build/internal/database/migrations ./migrations/
 
 # Change ownership
 RUN chown -R ark:ark /app

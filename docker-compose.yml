@@ -31,9 +31,7 @@ services:
       - ark-network
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
+    image: ghcr.io/srauf24/ark-backend:latest
     restart: unless-stopped
     env_file:
       - .env
@@ -50,13 +48,8 @@ services:
       - ark-network
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    image: ghcr.io/srauf24/ark-frontend:latest
     restart: unless-stopped
-    environment:
-      VITE_API_URL: https://api.arkcore.dev
-      VITE_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
     networks:
       - ark-network
 

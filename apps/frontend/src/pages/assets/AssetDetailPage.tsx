@@ -51,7 +51,7 @@ export function AssetDetailPage() {
 
     const deleteMutation = useDeleteAsset();
 
-    const { data, isLoading, isError, error } = useAsset(id || "");
+    const { data, isLoading, isError } = useAsset(id || "");
 
     const handleDelete = () => {
         if (!id) return;

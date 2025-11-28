@@ -24,7 +24,7 @@ type LoggerService struct {
 func NewLoggerService(cfg *config.ObservabilityConfig) *LoggerService {
 	service := &LoggerService{}
 
-	if !cfg.NewRelic.Enabled || cfg.NewRelic.LicenseKey == "" {
+	if cfg.NewRelic.LicenseKey == "" {
 		return service
 	}
 

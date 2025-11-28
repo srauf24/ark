@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wait-on ../../packages/openapi/dist/index.js && vite",
-    "build": "bun install && tsc && env-cmd -f .env.local vite build",
+    "build": "tsc -b && vite build",
     "test": "vite test",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -47,7 +47,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
     "ts-pattern": "^5.8.0",
-    "zod": "^4.1.13"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

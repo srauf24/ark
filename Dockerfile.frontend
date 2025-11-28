@@ -3,25 +3,39 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /build
 
+# Accept build-time arguments for Vite
+ARG VITE_API_URL
+ARG VITE_CLERK_PUBLISHABLE_KEY
+
 # Copy package files for dependency caching
 COPY package.json bun.lock ./
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/ ./packages/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Copy source files
 COPY apps/frontend/ ./apps/frontend/
 COPY turbo.json ./
 
-# Set build-time environment variables
-ENV VITE_API_URL=https://api.arkcore.dev
-ENV VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuYXJrY29yZS5kZXYk
+# Build shared packages first (frontend depends on these)
+WORKDIR /build/packages/zod
+RUN bun run build
+
+WORKDIR /build/packages/openapi
+RUN bun run build
+
+# Return to build root
+WORKDIR /build
+
+# Set environment variables from build args (Vite requires VITE_ prefix)
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
 
 # Build the frontend
 WORKDIR /build/apps/frontend
-RUN bun install && bun run vite build
+RUN bun run vite build
 
 # Runtime stage - serve static files with Caddy
 FROM caddy:2-alpine

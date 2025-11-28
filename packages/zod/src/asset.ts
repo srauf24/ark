@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZBase, ZUuid } from "./common.js";
+import { ZBase } from "./common.js";
 
 /**
  * Asset Zod schemas matching Go models
