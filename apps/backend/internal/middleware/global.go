@@ -3,13 +3,14 @@ package middleware
 import (
 	"net/http"
 
+	"ark/internal/errs"
+	"ark/internal/server"
+	"ark/internal/sqlerr"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"ark/internal/errs"
-	"ark/internal/server"
-	"ark/internal/sqlerr"
 )
 
 type GlobalMiddlewares struct {
@@ -24,7 +25,10 @@ func NewGlobalMiddlewares(s *server.Server) *GlobalMiddlewares {
 
 func (global *GlobalMiddlewares) CORS() echo.MiddlewareFunc {
 	return middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: global.server.Config.Server.CORSAllowedOrigins,
+		AllowOrigins:     global.server.Config.Server.CORSAllowedOrigins,
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowCredentials: true,
 	})
 }
 
