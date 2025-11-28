@@ -44,12 +44,12 @@ FROM caddy:2-alpine
 COPY --from=builder /build/apps/frontend/dist /srv
 
 # Simple Caddyfile for SPA
-RUN echo ':3000 { \n\
-    root * /srv \n\
-    try_files {path} /index.html \n\
-    file_server \n\
-    encode gzip \n\
-    }' > /etc/caddy/Caddyfile
+RUN printf ':3000 {\n\
+    root * /srv\n\
+    try_files {path} /index.html\n\
+    file_server\n\
+    encode gzip\n\
+    }\n' > /etc/caddy/Caddyfile
 
 EXPOSE 3000
 
