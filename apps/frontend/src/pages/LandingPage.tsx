@@ -52,6 +52,13 @@ export function LandingPage() {
                 Sign In
               </Button>
             </Link>
+            <Link to="/sign-up">
+              <Button
+                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-black font-bold shadow-lg shadow-emerald-500/30"
+              >
+                Sign Up
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
