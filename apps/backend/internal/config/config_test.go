@@ -112,3 +112,133 @@ func TestLoadConfig_WithClerkPEMPublicKey(t *testing.T) {
 // because LoadConfig() calls logger.Fatal() which executes os.Exit(1)
 // instead of panicking. This cannot be reliably tested with standard Go testing.
 // The validation is still in place and will fail at runtime if configuration is invalid.
+
+func TestLoadConfig_WithSingleCORSOrigin(t *testing.T) {
+	// Set up environment variables with single CORS origin
+	envVars := map[string]string{
+		"ARK_PRIMARY.ENV":                 "test",
+		"ARK_SERVER.PORT":                 "8080",
+		"ARK_SERVER.READ_TIMEOUT":         "30",
+		"ARK_SERVER.WRITE_TIMEOUT":        "30",
+		"ARK_SERVER.IDLE_TIMEOUT":         "60",
+		"ARK_SERVER.CORS_ALLOWED_ORIGINS": "http://localhost:3000",
+		"ARK_DATABASE.HOST":               "localhost",
+		"ARK_DATABASE.PORT":               "5432",
+		"ARK_DATABASE.USER":               "postgres",
+		"ARK_DATABASE.PASSWORD":           "password",
+		"ARK_DATABASE.NAME":               "testdb",
+		"ARK_DATABASE.SSL_MODE":           "disable",
+		"ARK_DATABASE.MAX_OPEN_CONNS":     "25",
+		"ARK_DATABASE.MAX_IDLE_CONNS":     "25",
+		"ARK_DATABASE.CONN_MAX_LIFETIME":  "300",
+		"ARK_DATABASE.CONN_MAX_IDLE_TIME": "300",
+		"ARK_AUTH.SECRET_KEY":             "secret",
+		"ARK_AUTH.CLERK.SECRET_KEY":       "sk_test_1234567890",
+		"ARK_AUTH.CLERK.JWT_ISSUER":       "https://test-app.clerk.accounts.dev",
+		"ARK_INTEGRATION.RESEND_API_KEY":  "re_test_key",
+		"ARK_REDIS.ADDRESS":               "localhost:6379",
+	}
+
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+	defer func() {
+		for key := range envVars {
+			os.Unsetenv(key)
+		}
+	}()
+
+	cfg, err := LoadConfig()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Len(t, cfg.Server.CORSAllowedOrigins, 1)
+	assert.Equal(t, "http://localhost:3000", cfg.Server.CORSAllowedOrigins[0])
+}
+
+func TestLoadConfig_WithMultipleCORSOrigins(t *testing.T) {
+	envVars := map[string]string{
+		"ARK_PRIMARY.ENV":                 "test",
+		"ARK_SERVER.PORT":                 "8080",
+		"ARK_SERVER.READ_TIMEOUT":         "30",
+		"ARK_SERVER.WRITE_TIMEOUT":        "30",
+		"ARK_SERVER.IDLE_TIMEOUT":         "60",
+		"ARK_SERVER.CORS_ALLOWED_ORIGINS": "https://arkcore.dev,https://www.arkcore.dev",
+		"ARK_DATABASE.HOST":               "localhost",
+		"ARK_DATABASE.PORT":               "5432",
+		"ARK_DATABASE.USER":               "postgres",
+		"ARK_DATABASE.PASSWORD":           "password",
+		"ARK_DATABASE.NAME":               "testdb",
+		"ARK_DATABASE.SSL_MODE":           "disable",
+		"ARK_DATABASE.MAX_OPEN_CONNS":     "25",
+		"ARK_DATABASE.MAX_IDLE_CONNS":     "25",
+		"ARK_DATABASE.CONN_MAX_LIFETIME":  "300",
+		"ARK_DATABASE.CONN_MAX_IDLE_TIME": "300",
+		"ARK_AUTH.SECRET_KEY":             "secret",
+		"ARK_AUTH.CLERK.SECRET_KEY":       "sk_test_1234567890",
+		"ARK_AUTH.CLERK.JWT_ISSUER":       "https://test-app.clerk.accounts.dev",
+		"ARK_INTEGRATION.RESEND_API_KEY":  "re_test_key",
+		"ARK_REDIS.ADDRESS":               "localhost:6379",
+	}
+
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+	defer func() {
+		for key := range envVars {
+			os.Unsetenv(key)
+		}
+	}()
+
+	cfg, err := LoadConfig()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Len(t, cfg.Server.CORSAllowedOrigins, 2)
+	assert.Equal(t, "https://arkcore.dev", cfg.Server.CORSAllowedOrigins[0])
+	assert.Equal(t, "https://www.arkcore.dev", cfg.Server.CORSAllowedOrigins[1])
+}
+
+func TestLoadConfig_WithMultipleCORSOriginsAndWhitespace(t *testing.T) {
+	envVars := map[string]string{
+		"ARK_PRIMARY.ENV":                 "test",
+		"ARK_SERVER.PORT":                 "8080",
+		"ARK_SERVER.READ_TIMEOUT":         "30",
+		"ARK_SERVER.WRITE_TIMEOUT":        "30",
+		"ARK_SERVER.IDLE_TIMEOUT":         "60",
+		"ARK_SERVER.CORS_ALLOWED_ORIGINS": "https://arkcore.dev, https://www.arkcore.dev, http://localhost:3000",
+		"ARK_DATABASE.HOST":               "localhost",
+		"ARK_DATABASE.PORT":               "5432",
+		"ARK_DATABASE.USER":               "postgres",
+		"ARK_DATABASE.PASSWORD":           "password",
+		"ARK_DATABASE.NAME":               "testdb",
+		"ARK_DATABASE.SSL_MODE":           "disable",
+		"ARK_DATABASE.MAX_OPEN_CONNS":     "25",
+		"ARK_DATABASE.MAX_IDLE_CONNS":     "25",
+		"ARK_DATABASE.CONN_MAX_LIFETIME":  "300",
+		"ARK_DATABASE.CONN_MAX_IDLE_TIME": "300",
+		"ARK_AUTH.SECRET_KEY":             "secret",
+		"ARK_AUTH.CLERK.SECRET_KEY":       "sk_test_1234567890",
+		"ARK_AUTH.CLERK.JWT_ISSUER":       "https://test-app.clerk.accounts.dev",
+		"ARK_INTEGRATION.RESEND_API_KEY":  "re_test_key",
+		"ARK_REDIS.ADDRESS":               "localhost:6379",
+	}
+
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+	defer func() {
+		for key := range envVars {
+			os.Unsetenv(key)
+		}
+	}()
+
+	cfg, err := LoadConfig()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Len(t, cfg.Server.CORSAllowedOrigins, 3)
+	assert.Equal(t, "https://arkcore.dev", cfg.Server.CORSAllowedOrigins[0])
+	assert.Equal(t, "https://www.arkcore.dev", cfg.Server.CORSAllowedOrigins[1])
+	assert.Equal(t, "http://localhost:3000", cfg.Server.CORSAllowedOrigins[2])
+}
