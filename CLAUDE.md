@@ -21,6 +21,8 @@ When generating code or plans:
 ### Frontend (React, Vite, Clerk, TanStack Query)
 - [`apps/frontend/CLAUDE.frontend.md`](apps/frontend/CLAUDE.frontend.md) - **Quick reference**: File structure, common commands
 - [`docs/claude/FRONTEND_GUIDE.md`](docs/claude/FRONTEND_GUIDE.md) - **Complete guide**: Tech stack, environment variables, API client patterns, features, testing strategy
+- [`apps/frontend/design-system.md`](apps/frontend/design-system.md) - **Design System**: Colors, typography, component patterns (S-Tier SaaS Dark Mode)
+- [`apps/frontend/design-principles.md`](apps/frontend/design-principles.md) - **Design Principles**: Core philosophy, layout, and interaction guidelines
 
 ### Backend (Go, Echo, PostgreSQL, Clean Architecture)
 - [`apps/backend/CLAUDE.backend.md`](apps/backend/CLAUDE.backend.md) - **Quick reference**: File structure, common commands, **new CLI migrate commands**
