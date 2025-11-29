@@ -145,6 +145,16 @@ func LoadConfig() (*Config, error) {
 		// Clean up the key: ARK_REDIS -> redis
 		k := strings.ToLower(strings.TrimPrefix(key, "ARK_"))
 
+		// Special handling for CORS origins - split comma-separated values
+		if k == "server.cors_allowed_origins" {
+			origins := strings.Split(value, ",")
+			trimmedOrigins := make([]string, len(origins))
+			for i, origin := range origins {
+				trimmedOrigins[i] = strings.TrimSpace(origin)
+			}
+			return k, trimmedOrigins
+		}
+
 		// Check if it's a map and parse it directly here
 		if mapData, isMap := parseMapString(value); isMap {
 			return k, mapData
