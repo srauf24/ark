@@ -40,6 +40,13 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Verify migrations in image
+        run: |
+          echo "Verifying migration files in Docker image..."
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest ls -la /app/migrations/
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest test -f /app/migrations/001_ark_schema.sql && echo "✓ Migration file verified" || (echo "ERROR: Migration file not found!" && exit 1)
+
+
   build-frontend:
     runs-on: ubuntu-latest
     permissions:

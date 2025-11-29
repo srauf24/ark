@@ -37,6 +37,11 @@ COPY --from=builder /build/ark .
 # Copy migrations if they exist
 COPY --from=builder /build/internal/database/migrations ./migrations/
 
+# Verify migrations were copied correctly
+RUN ls -la ./migrations/ && \
+    test -f ./migrations/001_ark_schema.sql || (echo "ERROR: Migration file 001_ark_schema.sql not found!" && exit 1) && \
+    echo "✓ Migration files verified"
+
 # Change ownership
 RUN chown -R ark:ark /app
 

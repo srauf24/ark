@@ -15,25 +15,24 @@ When generating code or plans:
 ## Documentation Index
 
 ### High-Level Architecture / Concepts
-- [`docs/claude/ARCHITECTURE.md`](docs/claude/ARCHITECTURE.md) - Project overview, goals, clean architecture, domain models, security
-- [`docs/claude/DEV_GUIDE.md`](docs/claude/DEV_GUIDE.md) - Development commands, database management, common tasks, troubleshooting
+- [`docs/claude/ARCHITECTURE.md`](docs/claude/ARCHITECTURE.md) - **System design**: Clean architecture layers, domain models (assets/logs), multi-tenancy, security patterns, database schema
+- [`docs/claude/DEV_GUIDE.md`](docs/claude/DEV_GUIDE.md) - **Local development**: Task commands, database setup, common workflows, troubleshooting tips
 
 ### Frontend (React, Vite, Clerk, TanStack Query)
-- [`apps/frontend/CLAUDE.frontend.md`](apps/frontend/CLAUDE.frontend.md) - Quick reference
-- [`docs/claude/FRONTEND_GUIDE.md`](docs/claude/FRONTEND_GUIDE.md) - Tech stack, environment variables, API client, features, testing
+- [`apps/frontend/CLAUDE.frontend.md`](apps/frontend/CLAUDE.frontend.md) - **Quick reference**: File structure, common commands
+- [`docs/claude/FRONTEND_GUIDE.md`](docs/claude/FRONTEND_GUIDE.md) - **Complete guide**: Tech stack, environment variables, API client patterns, features, testing strategy
 
 ### Backend (Go, Echo, PostgreSQL, Clean Architecture)
-- [`apps/backend/CLAUDE.backend.md`](apps/backend/CLAUDE.backend.md) - Quick reference
-- [`docs/claude/BACKEND_GUIDE.md`](docs/claude/BACKEND_GUIDE.md) - API endpoints, configuration, infrastructure, testing
+- [`apps/backend/CLAUDE.backend.md`](apps/backend/CLAUDE.backend.md) - **Quick reference**: File structure, common commands, **new CLI migrate commands**
+- [`docs/claude/BACKEND_GUIDE.md`](docs/claude/BACKEND_GUIDE.md) - **Complete guide**: API endpoints, configuration, **database migrations**, observability, background jobs, email integration, testing
 
 ### Contracts / OpenAPI / Zod
-- [`packages/openapi/CLAUDE.openapi.md`](packages/openapi/CLAUDE.openapi.md) - Quick reference
-- [`packages/zod/CLAUDE.zod.md`](packages/zod/CLAUDE.zod.md) - Quick reference
+- [`packages/openapi/CLAUDE.openapi.md`](packages/openapi/CLAUDE.openapi.md) - **Quick reference**: OpenAPI spec generation
+- [`packages/zod/CLAUDE.zod.md`](packages/zod/CLAUDE.zod.md) - **Quick reference**: Shared Zod schemas
 
-### CI/CD, Docker, Deployment, AWS
-- [`docs/claude/CICD_GUIDE.md`](docs/claude/CICD_GUIDE.md) - GitHub Actions, Docker builds, deployment workflow
-- [`docs/claude/DEPLOYMENT_GUIDE.md`](docs/claude/DEPLOYMENT_GUIDE.md) - AWS EC2, Caddy, production setup, troubleshooting
-- [`docs/claude/OBSERVABILITY_GUIDE.md`](docs/claude/OBSERVABILITY_GUIDE.md) - Logging, New Relic, metrics, future enhancements
+### Deployment, CI/CD, Docker, AWS
+- [`docs/claude/DEPLOYMENT_GUIDE.md`](docs/claude/DEPLOYMENT_GUIDE.md) - **Complete guide**: GitHub Actions CI/CD pipeline, Docker builds, **migration verification**, AWS EC2 setup, Caddy reverse proxy, production troubleshooting
+- [`docs/claude/OBSERVABILITY_GUIDE.md`](docs/claude/OBSERVABILITY_GUIDE.md) - **Monitoring**: Logging (Zerolog), New Relic APM, metrics, future enhancements
 
 ## Rules
 
@@ -42,6 +41,7 @@ When generating code or plans:
 - Maintain type safety across frontend ↔ backend
 - Match OpenAPI contracts exactly
 - Never assume hidden state; refer to the docs above
+- **Before committing**: Verify `apps/backend/ark` binary is not staged (it's in `.gitignore`)
 
 ## Task Workflow
 

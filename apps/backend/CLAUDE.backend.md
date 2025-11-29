@@ -29,6 +29,11 @@ task run
 # Run database migrations
 task migrations:up
 
+# Manual migration commands (new!)
+./ark migrate up        # Run pending migrations
+./ark migrate status    # Show current migration version
+./ark migrate validate  # Validate schema (check tables exist)
+
 # Create a new migration
 task migrations:new name=migration_name
 
