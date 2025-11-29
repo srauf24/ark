@@ -39,4 +39,9 @@ bun typecheck
 - **Authentication**: Clerk provider with JWT template "api-test"
 - **State Management**: TanStack Query for server state
 
+## Design System
+
+- [`design-system.md`](design-system.md) - **Core System**: Colors, typography, components
+- [`design-principles.md`](design-principles.md) - **Guidelines**: Philosophy, layout, interactions
+
 See [FRONTEND_GUIDE.md](../../docs/claude/FRONTEND_GUIDE.md) for full documentation.

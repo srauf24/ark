@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,11 +17,23 @@ import (
 	"ark/internal/router"
 	"ark/internal/server"
 	"ark/internal/service"
+
+	"github.com/rs/zerolog"
 )
 
 const DefaultContextTimeout = 30
 
 func main() {
+	// Check for migrate subcommand before loading full config
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		if err := runMigrate(); err != nil {
+			// Use a basic logger since we might not have loaded config yet
+			l := zerolog.New(os.Stderr).With().Timestamp().Logger()
+			l.Fatal().Err(err).Msg("migration command failed")
+		}
+		return
+	}
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		panic("failed to load config: " + err.Error())
@@ -78,4 +91,49 @@ func main() {
 	cancel()
 
 	log.Info().Msg("server exited properly")
+}
+
+func runMigrate() error {
+	if len(os.Args) < 3 {
+		return fmt.Errorf("usage: ark migrate <command> [args]\ncommands: up, status, validate")
+	}
+
+	cmd := os.Args[2]
+
+	// Load config
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+
+	// Initialize logger
+	loggerService := logger.NewLoggerService(cfg.Observability)
+	defer loggerService.Shutdown()
+	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
+
+	ctx := context.Background()
+
+	switch cmd {
+	case "up":
+		log.Info().Msg("running database migrations...")
+		if err := database.Migrate(ctx, &log, cfg); err != nil {
+			return err
+		}
+		log.Info().Msg("migrations completed successfully")
+	case "status":
+		log.Info().Msg("checking migration status...")
+		if err := database.Status(ctx, &log, cfg); err != nil {
+			return err
+		}
+	case "validate":
+		log.Info().Msg("validating database schema...")
+		if err := database.Validate(ctx, &log, cfg); err != nil {
+			return err
+		}
+		log.Info().Msg("schema validation passed")
+	default:
+		return fmt.Errorf("unknown migration command: %s", cmd)
+	}
+
+	return nil
 }

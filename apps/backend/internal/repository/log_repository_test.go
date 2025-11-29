@@ -2,13 +2,18 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
+	"time"
+
+	"ark/internal/errs"
+	"ark/internal/model"
+	testingPkg "ark/internal/testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"ark/internal/errs"
-	testingPkg "ark/internal/testing"
 )
 
 // ========== Constructor Tests ==========
@@ -493,7 +498,7 @@ func TestLogRepository_ListByAsset_DateRange_Both(t *testing.T) {
 		time.Now().Add(-72 * time.Hour), // 3 days ago
 		time.Now().Add(-48 * time.Hour), // 2 days ago
 		time.Now().Add(-24 * time.Hour), // 1 day ago
-		time.Now(),                       // now
+		time.Now(),                      // now
 	}
 
 	for i, date := range dates {

@@ -35,4 +35,9 @@ bun run build
 - Frontend depends on built output, not source files
 - Always run `bun run build` after schema changes
 
+## Related Documentation
+
+- [`docs/claude/BACKEND_GUIDE.md`](../../docs/claude/BACKEND_GUIDE.md) - **Validation**: How schemas are used in the backend
+- [`docs/claude/FRONTEND_GUIDE.md`](../../docs/claude/FRONTEND_GUIDE.md) - **Form Types**: Using schemas with react-hook-form
+
 See [DEV_GUIDE.md](../../docs/claude/DEV_GUIDE.md#shared-packages) for full workflow.

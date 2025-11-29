@@ -52,6 +52,13 @@ export function LandingPage() {
                 Sign In
               </Button>
             </Link>
+            <Link to="/sign-up">
+              <Button
+                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-black font-bold shadow-lg shadow-emerald-500/30"
+              >
+                Sign Up
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -104,7 +111,7 @@ export function LandingPage() {
               <div className="grid grid-cols-2 gap-8 pt-8 max-w-sm">
                 {[
                   { value: "Unlimited", label: "Assets" },
-                  { value: "Free", label: "To Start" },
+                  { value: "Free", label: "Full Access" },
                 ].map((stat, i) => (
                   <div
                     key={i}

@@ -35,4 +35,9 @@ bun run build
 go test -v ./internal/handler -run TestOpenAPI
 ```
 
+## Related Documentation
+
+- [`docs/claude/BACKEND_GUIDE.md`](../../docs/claude/BACKEND_GUIDE.md) - **API Implementation**: How to implement these contracts in Go
+- [`docs/claude/FRONTEND_GUIDE.md`](../../docs/claude/FRONTEND_GUIDE.md) - **API Consumption**: How to use the generated client in React
+
 See [DEV_GUIDE.md](../../docs/claude/DEV_GUIDE.md#working-with-the-openapi-spec) for full workflow.
