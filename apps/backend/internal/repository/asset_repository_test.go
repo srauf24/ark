@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"ark/internal/errs"
 	"ark/internal/model"
 	testingPkg "ark/internal/testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // ========== Constructor Tests ==========
