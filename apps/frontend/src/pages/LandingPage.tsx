@@ -104,7 +104,7 @@ export function LandingPage() {
               <div className="grid grid-cols-2 gap-8 pt-8 max-w-sm">
                 {[
                   { value: "Unlimited", label: "Assets" },
-                  { value: "Free", label: "To Start" },
+                  { value: "Free", label: "Full Access" },
                 ].map((stat, i) => (
                   <div
                     key={i}
