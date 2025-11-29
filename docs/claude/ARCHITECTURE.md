@@ -6,7 +6,7 @@
 
 ### Project Goals
 
-**Primary Purpose**: Create a production-ready tool for the homelab community while building resume-worthy achievements that demonstrate end-to-end development capabilities.
+**Primary Purpose**: Create a production-ready tool for the homelab community while  demonstrating end-to-end development capabilities.
 
 **Target Audience**: Homelab enthusiasts who value control over their infrastructure and want a self-hosted solution for asset tracking and log management.
 
@@ -173,20 +173,3 @@ Configuration changes or troubleshooting logs
 - Use environment variables for all secrets
 - API keys, JWT secrets, database passwords in env vars only
 
-## Migration History
-
-**Note**: This project was migrated from `garden_journal` codebase. All plant/observation domain code has been replaced with asset/log equivalents. Module name is now `ark`, database name is `ark`.
-
-**What was reused** (production-ready infrastructure):
-- Authentication system (Clerk middleware, JWT verification)
-- Observability stack (New Relic, Zerolog, health checks)
-- Background job processing (Asynq, Redis)
-- Email system (Resend, templates)
-- Error handling and middleware pipeline
-- Configuration management (Koanf)
-
-**What was adapted**:
-- Domain models (Asset, AssetLog instead of Plant, Observation)
-- Handlers, services, repositories for new domain
-- API endpoints and routes
-- OpenAPI specifications
